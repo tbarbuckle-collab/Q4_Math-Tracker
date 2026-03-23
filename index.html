@@ -72,13 +72,13 @@
             </div>
         </div>
 
-        <!-- Connection Alert (Only shows if config is missing) -->
+        <!-- Connection Alert -->
         <div id="config-alert" class="hidden mb-8 p-6 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl">
             <div class="flex items-start gap-4">
                 <i class="fa-solid fa-cloud-slash text-amber-500 text-2xl mt-1"></i>
                 <div>
                     <h3 class="font-bold text-amber-900">Cloud Connection Required</h3>
-                    <p class="text-amber-800 text-sm mt-1">This tracker is currently running in "Offline Mode". To sync data with your team, you need to provide the department cloud configuration.</p>
+                    <p class="text-amber-800 text-sm mt-1">To sync with the department, click below and paste the cloud config code.</p>
                     <button onclick="openSetup()" class="mt-4 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-700 transition">Enter Cloud Config</button>
                 </div>
             </div>
@@ -91,7 +91,6 @@
             <button onclick="showGrade(8)" id="tab-8" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 8</button>
         </div>
 
-        <!-- Toolbar -->
         <div class="mb-4 flex flex-col md:flex-row gap-4">
             <div class="relative flex-grow">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -102,7 +101,6 @@
             </button>
         </div>
 
-        <!-- Student Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -115,34 +113,30 @@
                             <th class="p-5">Observations</th>
                         </tr>
                     </thead>
-                    <tbody id="student-table-body" class="divide-y divide-slate-100">
-                    </tbody>
+                    <tbody id="student-table-body" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Assignment Modal -->
+        <!-- Modals -->
         <div id="modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">New Writing Task</h3>
-                <p class="text-slate-500 mb-8">Create a unique data entry point for a specific assignment.</p>
                 <input type="text" id="new-assignment-name" placeholder="e.g. Unit 4 Math Probe" class="w-full p-4 border border-slate-200 rounded-xl mb-8 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50">
                 <div class="flex gap-4">
                     <button onclick="closeModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
-                    <button onclick="handleModalSubmit()" class="flex-1 py-4 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 transition">Create Task</button>
+                    <button onclick="handleModalSubmit()" class="flex-1 py-4 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 transition">Create</button>
                 </div>
             </div>
         </div>
 
-        <!-- Setup Modal -->
         <div id="setup-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Cloud Configuration</h3>
-                <p class="text-slate-500 mb-6 text-sm">Paste the configuration object provided by your Math Lead or IT Department here to enable real-time department syncing.</p>
-                <textarea id="config-input" placeholder='{"apiKey": "...", "authDomain": "...", ...}' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
+                <textarea id="config-input" placeholder='Paste Config JSON here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
                 <div class="flex gap-4">
-                    <button onclick="closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Close</button>
-                    <button onclick="saveConfig()" class="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Apply Config</button>
+                    <button onclick="closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                    <button onclick="saveConfig()" class="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Sync Now</button>
                 </div>
             </div>
         </div>
@@ -161,8 +155,7 @@
             8: ["Ayela Hubbard", "Tyoun Handy", "Diana Kreiner", "Kayleb Cottingham", "Noah Wallace", "Ka'Marley Smith", "Tatyana Smith", "Zion Smith"]
         };
 
-        let db, auth, appId;
-        let isCloud = false;
+        let db, auth, appId, isCloud = false;
         let currentGrade = 6;
         let currentAssignmentId = 'default_assignment';
         let assignments = [{ id: 'default_assignment', name: 'Baseline Assessment' }];
@@ -170,11 +163,7 @@
 
         const startApp = async () => {
             let config = null;
-            
-            // Try environment first
             try { if (typeof __firebase_config !== 'undefined') config = JSON.parse(__firebase_config); } catch(e) {}
-            
-            // Try local storage next
             if (!config) {
                 const stored = localStorage.getItem('math_cloud_config');
                 if (stored) config = JSON.parse(stored);
@@ -185,25 +174,16 @@
                     const app = initializeApp(config);
                     db = getFirestore(app);
                     auth = getAuth(app);
-                    appId = typeof __app_id !== 'undefined' ? __app_id : 'math-department-sync';
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'math-dept-sync';
                     isCloud = true;
-                    
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) setupSync();
-                    });
-                    
+                    onAuthStateChanged(auth, (user) => { if (user) setupSync(); });
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
                         await signInAnonymously(auth);
                     }
-                } catch (e) {
-                    console.error("Firebase Error", e);
-                    enableLocalFallback();
-                }
-            } else {
-                enableLocalFallback();
-            }
+                } catch (e) { enableLocalFallback(); }
+            } else { enableLocalFallback(); }
         };
 
         function enableLocalFallback() {
@@ -219,9 +199,7 @@
                 if (docSnap.exists()) {
                     assignments = docSnap.data().items || assignments;
                     updateAssignmentUI();
-                } else {
-                    setDoc(metaRef, { items: assignments });
-                }
+                } else { setDoc(metaRef, { items: assignments }); }
                 loadAssignmentScores();
             });
         }
@@ -253,7 +231,6 @@
             if (!activeScores[grade]) activeScores[grade] = {};
             if (!activeScores[grade][name]) activeScores[grade][name] = { baseline: '', revision: '', strategy: '', notes: '' };
             activeScores[grade][name][field] = val;
-            
             if (isCloud && auth.currentUser) {
                 const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
                 await setDoc(scoreRef, { grades: activeScores }, { merge: true });
@@ -264,25 +241,11 @@
             updateStats();
         }
 
-        // --- UI HELPERS ---
-        function updateSyncStatus(status) {
-            const el = document.getElementById('sync-status');
-            if (status === 'connected') {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Department Live Sync`;
-                el.className = 'sync-indicator text-emerald-600 font-bold';
-            } else if (status === 'local') {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline Mode`;
-                el.className = 'sync-indicator text-amber-600 font-bold';
-            } else {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Connecting...`;
-            }
-        }
-
         function renderTable() {
             const body = document.getElementById('student-table-body');
             body.innerHTML = '';
             rosters[currentGrade].forEach(name => {
-                const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || { baseline: '', revision: '', strategy: '', notes: '' };
+                const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || {};
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-slate-50 transition student-row';
                 row.innerHTML = `
@@ -304,36 +267,42 @@
             });
         }
 
+        // Standard helpers
+        function updateSyncStatus(s) {
+            const el = document.getElementById('sync-status');
+            if (s === 'connected') el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Live Sync Active`;
+            else if (s === 'local') el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline Mode`;
+            else el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Syncing...`;
+        }
         function updateStats() {
-            let growth = 0, count = 0, rev = 0;
-            Object.values(activeScores).forEach(g => Object.values(g).forEach(s => {
-                if (s.baseline !== '' && s.revision !== '' && s.baseline !== null) {
-                    growth += (parseFloat(s.revision) - parseFloat(s.baseline));
-                    count++; rev++;
-                }
+            let g = 0, c = 0, r = 0;
+            Object.values(activeScores).forEach(gr => Object.values(gr).forEach(s => {
+                if (s.baseline !== '' && s.revision !== '' && s.baseline !== null) { g += (parseFloat(s.revision) - parseFloat(s.baseline)); c++; r++; }
             }));
-            const total = rosters[6].length + rosters[7].length + rosters[8].length;
-            document.getElementById('total-students').innerText = total;
-            document.getElementById('avg-growth').innerText = count > 0 ? `+ ${(growth/count).toFixed(2)}` : '0.00';
-            document.getElementById('revision-rate').innerText = total > 0 ? Math.round((rev/total)*100) : '0';
+            const t = rosters[6].length + rosters[7].length + rosters[8].length;
+            document.getElementById('total-students').innerText = t;
+            document.getElementById('avg-growth').innerText = c > 0 ? `+ ${(g/c).toFixed(2)}` : '0.00';
+            document.getElementById('revision-rate').innerText = t > 0 ? Math.round((r/t)*100) : '0';
         }
-
         function updateAssignmentUI() {
-            const s = document.getElementById('assignment-selector');
-            s.innerHTML = '';
-            assignments.forEach(a => {
-                const o = document.createElement('option');
-                o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId;
-                s.add(o);
-            });
+            const sel = document.getElementById('assignment-selector'); sel.innerHTML = '';
+            assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId; sel.add(o); });
         }
-
         window.updateVal = updateVal;
         window.switchAssignment = (id) => { currentAssignmentId = id; isCloud ? loadAssignmentScores() : loadLocalData(); };
         window.showGrade = (g) => { currentGrade = g; document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active')); document.getElementById(`tab-${g}`).classList.add('tab-active'); renderTable(); };
         window.openModal = () => document.getElementById('modal-overlay').style.display = 'flex';
         window.closeModal = () => document.getElementById('modal-overlay').style.display = 'none';
-        window.handleModalSubmit = () => { const n = document.getElementById('new-assignment-name').value; if(n){ createNewAssignment(n); closeModal(); } };
+        window.handleModalSubmit = async () => {
+            const n = document.getElementById('new-assignment-name').value;
+            if(n){
+                const id = 'asgn_' + Date.now();
+                assignments.push({id, name: n, createdAt: new Date().toISOString()});
+                if(isCloud){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: assignments }); }
+                else { localStorage.setItem('math_meta', JSON.stringify(assignments)); }
+                switchAssignment(id); closeModal();
+            }
+        };
         window.openSetup = () => document.getElementById('setup-overlay').style.display = 'flex';
         window.closeSetup = () => document.getElementById('setup-overlay').style.display = 'none';
         window.saveConfig = () => { const v = document.getElementById('config-input').value; if(v){ localStorage.setItem('math_cloud_config', v); location.reload(); } };
@@ -344,17 +313,9 @@
         window.exportData = () => {
             const a = assignments.find(x => x.id === currentAssignmentId);
             let csv = `Assignment: ${a.name}\nGrade,Name,Baseline,Revision,Strategy,Notes\n`;
-            [6,7,8].forEach(g => rosters[g].forEach(n => {
-                const s = (activeScores[g] && activeScores[g][n]) || {};
-                csv += `${g},"${n}","${s.baseline||''}","${s.revision||''}","${s.strategy||''}","${s.notes||''}"\n`;
-            }));
-            const link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv'})));
-            link.setAttribute("download", `math_data_${a.name}.csv`);
-            link.click();
+            [6,7,8].forEach(g => rosters[g].forEach(n => { const s = (activeScores[g] && activeScores[g][n]) || {}; csv += `${g},"${n}","${s.baseline||''}","${s.revision||''}","${s.strategy||''}","${s.notes||''}"\n`; }));
+            const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv'}))); link.setAttribute("download", `math_data_${a.name}.csv`); link.click();
         };
-        function showMessage(t,y){ const c = document.getElementById('message-container'); const m = document.createElement('div'); m.className = `px-6 py-4 rounded-xl text-white font-bold ${y==='error'?'bg-red-600':'bg-blue-900'}`; m.innerText = t; c.appendChild(m); setTimeout(()=>m.remove(),3000); }
-
         startApp();
     </script>
 </body>
