@@ -53,7 +53,7 @@
                     </select>
                 </div>
                 <div class="flex gap-2 border-l border-slate-200 pl-3 pr-1">
-                    <button onclick="openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-md">
+                    <button onclick="openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-md" title="New Assignment for this Grade">
                         <i class="fa-solid fa-plus text-base"></i>
                     </button>
                     <button id="delete-btn" onclick="openDeleteModal()" class="bg-red-50 text-red-600 w-10 h-10 rounded-lg hover:bg-red-100 transition flex items-center justify-center border border-red-100">
@@ -144,14 +144,14 @@
         </div>
 
         <div class="mt-12 text-center text-[10px] text-slate-400 font-mono tracking-widest uppercase">
-            Tracker Version: 2.6 (Auto-Paste Fix)
+            Tracker Version: 2.7 (Grade-Specific Assignments)
         </div>
 
         <!-- Setup Modal -->
         <div id="setup-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Cloud Settings</h3>
-                <p class="text-sm text-slate-500 mb-6 text-center">Paste your Firebase code here. Version 2.6 will automatically fix any formatting issues for you.</p>
+                <p class="text-sm text-slate-500 mb-6 text-center">Paste your Firebase code here. The system will handle the rest.</p>
                 <textarea id="config-input" placeholder='Paste your Firebase code here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
                 <div class="flex flex-col gap-3">
                     <div class="flex gap-4">
@@ -164,10 +164,11 @@
             </div>
         </div>
 
-        <!-- Add/Delete Modals -->
+        <!-- Add Modal -->
         <div id="modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
-                <h3 class="text-2xl font-bold text-slate-800 mb-2">New Writing Task</h3>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">New Grade <span id="add-modal-grade"></span> Task</h3>
+                <p class="text-xs text-slate-400 mb-4">This assignment will only be visible for this grade level.</p>
                 <input type="text" id="new-assignment-name" placeholder="e.g. Unit 4 Math Probe" class="w-full p-4 border border-slate-200 rounded-xl mb-8 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 text-center">
                 <div class="flex gap-4">
                     <button onclick="closeModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
@@ -176,13 +177,14 @@
             </div>
         </div>
 
+        <!-- Delete Modal -->
         <div id="delete-modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 mx-auto">
-                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                    <i class="fa-solid fa-trash-can text-2xl"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Delete Assignment?</h3>
-                <p class="text-slate-500 mb-8">Permanently remove <span id="delete-asgn-name" class="font-bold text-slate-800"></span>? This cannot be undone.</p>
+                <p class="text-slate-500 mb-8">Permanently remove <span id="delete-asgn-name" class="font-bold text-slate-800"></span>? This will only affect Grade <span id="delete-modal-grade"></span>.</p>
                 <div class="flex gap-4">
                     <button onclick="closeDeleteModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
                     <button onclick="handleConfirmDelete()" class="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition">Delete</button>
@@ -195,7 +197,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const rosters = {
@@ -206,8 +208,8 @@
 
         let db, auth, appId, isCloud = false;
         let currentGrade = 6;
-        let currentAssignmentId = 'default_assignment';
-        let assignments = [{ id: 'default_assignment', name: 'Baseline Assessment' }];
+        let currentAssignmentId = '';
+        let assignments = []; // This will be the grade-specific list
         let activeScores = { 6: {}, 7: {}, 8: {} };
 
         const startApp = async () => {
@@ -231,7 +233,7 @@
 
                     signInAnonymously(auth).catch(err => {
                         console.error(err);
-                        showSystemError("Connection Denied: Ensure 'Anonymous Login' is ENABLED in Firebase Authentication.");
+                        showSystemError("Connection Denied: Ensure 'Anonymous Login' is ENABLED in Firebase.");
                     });
                 } catch (e) { enableLocalFallback(); }
             } else { enableLocalFallback(); }
@@ -244,10 +246,27 @@
             loadLocalData();
         }
 
+        let unsubMeta = null;
         function setupSync() {
-            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list');
-            onSnapshot(metaRef, (docSnap) => {
-                assignments = docSnap.exists() ? docSnap.data().items : assignments;
+            if (unsubMeta) unsubMeta();
+
+            // Listen to metadata for the CURRENT grade specifically
+            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`);
+            
+            unsubMeta = onSnapshot(metaRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    assignments = docSnap.data().items || [];
+                } else {
+                    // Default if nothing exists for this grade
+                    assignments = [{ id: `default_grade_${currentGrade}`, name: `Grade ${currentGrade} Baseline` }];
+                    setDoc(metaRef, { items: assignments });
+                }
+
+                // If no assignment selected yet, or current selected isn't in this grade's list
+                if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) {
+                    currentAssignmentId = assignments[0].id;
+                }
+
                 updateAssignmentUI();
                 loadAssignmentScores();
             }, (err) => {
@@ -255,18 +274,23 @@
                 if (err.code === 'permission-denied') {
                     showSystemError("Permission Denied: Please check your Firestore Rules tab.");
                 } else {
-                    showSystemError("Sync Error: Is your GitHub URL added to 'Authorized Domains'?");
+                    showSystemError("Sync Error: Checking settings...");
                 }
             });
         }
 
         let unsubScores = null;
         function loadAssignmentScores() {
+            if (!currentAssignmentId) return;
             if (unsubScores) unsubScores();
+            
             updateSyncStatus('connecting');
             const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
+            
             unsubScores = onSnapshot(scoreRef, (docSnap) => {
-                activeScores = docSnap.exists() ? docSnap.data().grades : { 6: {}, 7: {}, 8: {} };
+                // Initialize clean structure for this grade
+                const scores = docSnap.exists() ? docSnap.data().grades : { 6: {}, 7: {}, 8: {} };
+                activeScores = scores;
                 updateSyncStatus('connected');
                 renderTable();
                 updateStats();
@@ -274,10 +298,20 @@
         }
 
         function loadLocalData() {
-            const m = localStorage.getItem('math_meta');
-            if (m) { try { assignments = JSON.parse(m); } catch(e) {} }
+            const m = localStorage.getItem(`math_meta_g${currentGrade}`);
+            if (m) { 
+                try { assignments = JSON.parse(m); } catch(e) {} 
+            } else {
+                assignments = [{ id: `local_default_g${currentGrade}`, name: `Grade ${currentGrade} Initial` }];
+            }
+
+            if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) {
+                currentAssignmentId = assignments[0].id;
+            }
+
             const s = localStorage.getItem(`math_scores_${currentAssignmentId}`);
             activeScores = s ? JSON.parse(s) : { 6: {}, 7: {}, 8: {} };
+            
             updateAssignmentUI();
             renderTable();
             updateStats();
@@ -287,21 +321,15 @@
             if (!activeScores[grade]) activeScores[grade] = {};
             if (!activeScores[grade][name]) activeScores[grade][name] = { baseline: '', revision: '', strategy: '', notes: '' };
             activeScores[grade][name][field] = val;
+            
             if (isCloud && auth && auth.currentUser) {
                 const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
                 await setDoc(scoreRef, { grades: activeScores }, { merge: true });
             } else {
                 localStorage.setItem(`math_scores_${currentAssignmentId}`, JSON.stringify(activeScores));
-                localStorage.setItem('math_meta', JSON.stringify(assignments));
+                localStorage.setItem(`math_meta_g${currentGrade}`, JSON.stringify(assignments));
             }
             updateStats();
-        }
-
-        window.resetCloudConfig = () => {
-            if(confirm("This will clear your connection keys. You will need to paste your Firebase JSON again. Proceed?")) {
-                localStorage.removeItem('math_cloud_config');
-                location.reload();
-            }
         }
 
         window.saveConfig = () => { 
@@ -309,29 +337,35 @@
             const btn = document.getElementById('apply-btn');
             try {
                 let cleaned = input;
-                // 1. Extract content between braces
                 if (cleaned.includes('{') && cleaned.includes('}')) {
                     cleaned = cleaned.substring(cleaned.indexOf('{'), cleaned.lastIndexOf('}') + 1);
                 }
-                
-                // 2. Fix unquoted keys (Version 2.6 fix)
-                // This regex finds keys like apiKey: and turns them into "apiKey":
                 cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9]+)\s*:/g, '$1"$2":');
-                
                 const configObj = JSON.parse(cleaned);
                 if (!configObj.apiKey) throw new Error("Key Missing");
                 localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
                 btn.innerText = "Connecting...";
                 setTimeout(() => location.reload(), 1000);
-            } catch (e) { 
-                console.error(e);
-                alert("Invalid format. Please make sure to copy the entire { ... } block."); 
+            } catch (e) { alert("Invalid format. Please copy the whole { } block."); }
+        };
+
+        window.resetCloudConfig = () => {
+            if(confirm("Clear connection keys? You will need to paste your Firebase JSON again.")) {
+                localStorage.removeItem('math_cloud_config');
+                location.reload();
             }
         };
 
         function renderTable() {
             const body = document.getElementById('student-table-body');
             body.innerHTML = '';
+            
+            // Safety check for empty assignments
+            if (!currentAssignmentId) {
+                body.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400">Please create an assignment for this grade to begin.</td></tr>';
+                return;
+            }
+
             rosters[currentGrade].forEach(name => {
                 const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || {};
                 const row = document.createElement('tr');
@@ -358,8 +392,8 @@
         function updateSyncStatus(s) {
             const el = document.getElementById('sync-status');
             if (!el) return;
-            if (s === 'connected') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Department Live`; el.className = 'sync-indicator text-emerald-600 font-bold'; document.getElementById('config-alert').classList.add('hidden'); document.getElementById('connection-error-alert').classList.add('hidden'); }
-            else if (s === 'local') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline Mode`; el.className = 'sync-indicator text-amber-600 font-bold'; }
+            if (s === 'connected') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Grade ${currentGrade} Live`; el.className = 'sync-indicator text-emerald-600 font-bold'; document.getElementById('config-alert').classList.add('hidden'); document.getElementById('connection-error-alert').classList.add('hidden'); }
+            else if (s === 'local') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Grade ${currentGrade} Offline`; el.className = 'sync-indicator text-amber-600 font-bold'; }
             else if (s === 'error') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Connection Error`; el.className = 'sync-indicator text-red-600 font-bold'; }
             else { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Syncing...`; }
         }
@@ -373,10 +407,15 @@
 
         function updateStats() {
             let g = 0, c = 0, r = 0;
-            Object.values(activeScores).forEach(gr => Object.values(gr).forEach(s => {
-                if (s.baseline !== '' && s.revision !== '' && s.baseline !== null) { g += (parseFloat(s.revision) - parseFloat(s.baseline)); c++; r++; }
-            }));
-            const t = rosters[6].length + rosters[7].length + rosters[8].length;
+            // Only look at current grade's data
+            const grData = activeScores[currentGrade] || {};
+            Object.values(grData).forEach(s => {
+                if (s.baseline !== '' && s.revision !== '' && s.baseline !== null) {
+                    g += (parseFloat(s.revision) - parseFloat(s.baseline));
+                    c++; r++;
+                }
+            });
+            const t = rosters[currentGrade].length;
             document.getElementById('total-students').innerText = t;
             document.getElementById('avg-growth').innerText = c > 0 ? `+ ${(g/c).toFixed(2)}` : '0.00';
             document.getElementById('revision-rate').innerText = t > 0 ? Math.round((r/t)*100) : '0';
@@ -384,42 +423,108 @@
 
         function updateAssignmentUI() {
             const sel = document.getElementById('assignment-selector'); sel.innerHTML = '';
-            assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId; sel.add(o); });
+            assignments.forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId;
+                sel.add(o);
+            });
+            const del = document.getElementById('delete-btn');
+            if (assignments.length <= 0) del.classList.add('opacity-30', 'pointer-events-none');
+            else del.classList.remove('opacity-30', 'pointer-events-none');
         }
 
-        window.updateVal = updateVal;
-        window.switchAssignment = (id) => { currentAssignmentId = id; isCloud ? loadAssignmentScores() : loadLocalData(); };
-        window.showGrade = (g) => { currentGrade = g; document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active')); document.getElementById(`tab-${g}`).classList.add('tab-active'); renderTable(); };
-        window.openModal = () => document.getElementById('modal-overlay').style.display = 'flex';
+        window.showGrade = (g) => {
+            currentGrade = g;
+            document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById(`tab-${g}`).classList.add('tab-active');
+            
+            // Switch synchronization to the new grade context
+            if (isCloud) {
+                setupSync();
+            } else {
+                loadLocalData();
+            }
+        };
+
+        window.switchAssignment = (id) => {
+            currentAssignmentId = id;
+            if (isCloud) {
+                loadAssignmentScores();
+            } else {
+                const s = localStorage.getItem(`math_scores_${id}`);
+                activeScores = s ? JSON.parse(s) : { 6: {}, 7: {}, 8: {} };
+                renderTable();
+                updateStats();
+            }
+        };
+
+        window.openModal = () => {
+            document.getElementById('add-modal-grade').innerText = currentGrade;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        };
         window.closeModal = () => { document.getElementById('modal-overlay').style.display = 'none'; document.getElementById('new-assignment-name').value = ''; };
+        
         window.handleModalSubmit = async () => {
             const n = document.getElementById('new-assignment-name').value;
             if(n){
-                const id = 'asgn_' + Date.now();
+                const id = `asgn_g${currentGrade}_${Date.now()}`;
                 assignments.push({id, name: n, createdAt: new Date().toISOString()});
-                if(isCloud && db){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: assignments }); }
-                else { localStorage.setItem('math_meta', JSON.stringify(assignments)); }
-                switchAssignment(id); closeModal();
+                
+                if(isCloud){
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`), { items: assignments });
+                } else {
+                    localStorage.setItem(`math_meta_g${currentGrade}`, JSON.stringify(assignments));
+                    switchAssignment(id);
+                }
+                closeModal();
+                showMessage("Task Created", "success");
             }
         };
-        window.openDeleteModal = () => { const asgn = assignments.find(a => a.id === currentAssignmentId); document.getElementById('delete-asgn-name').innerText = asgn ? asgn.name : "this task"; document.getElementById('delete-modal-overlay').style.display = 'flex'; };
+
+        window.openDeleteModal = () => {
+            const asgn = assignments.find(a => a.id === currentAssignmentId);
+            document.getElementById('delete-asgn-name').innerText = asgn ? asgn.name : "this task";
+            document.getElementById('delete-modal-grade').innerText = currentGrade;
+            document.getElementById('delete-modal-overlay').style.display = 'flex';
+        };
         window.closeDeleteModal = () => document.getElementById('delete-modal-overlay').style.display = 'none';
+        
         window.handleConfirmDelete = async () => {
             const idToDelete = currentAssignmentId;
-            const remainingAssignments = assignments.filter(a => a.id !== idToDelete);
-            if (isCloud) { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: remainingAssignments }); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', idToDelete)); }
-            else { localStorage.setItem('math_meta', JSON.stringify(remainingAssignments)); localStorage.removeItem(`math_scores_${idToDelete}`); }
-            assignments = remainingAssignments; switchAssignment(assignments[0].id); closeDeleteModal(); showMessage("Removed", "error");
+            const remaining = assignments.filter(a => a.id !== idToDelete);
+            
+            if (isCloud) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`), { items: remaining });
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', idToDelete));
+            } else {
+                localStorage.setItem(`math_meta_g${currentGrade}`, JSON.stringify(remaining));
+                localStorage.removeItem(`math_scores_${idToDelete}`);
+                assignments = remaining;
+                switchAssignment(assignments.length > 0 ? assignments[0].id : '');
+            }
+            closeDeleteModal();
+            showMessage("Task Deleted", "error");
         };
-        window.openSetup = () => document.getElementById('setup-overlay').style.display = 'flex';
-        window.closeSetup = () => document.getElementById('setup-overlay').style.display = 'none';
-        window.filterStudents = () => { const q = document.getElementById('search').value.toLowerCase(); document.querySelectorAll('.student-row').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none'); };
+
+        window.filterStudents = () => {
+            const q = document.getElementById('search').value.toLowerCase();
+            document.querySelectorAll('.student-row').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none');
+        };
+
         window.exportData = () => {
             const a = assignments.find(x => x.id === currentAssignmentId);
-            let csv = `Assignment: ${a.name}\nGrade,Name,Baseline,Revision,Strategy,Notes\n`;
-            [6,7,8].forEach(g => rosters[g].forEach(n => { const s = (activeScores[g] && activeScores[g][n]) || {}; csv += `${g},"${n}","${s.baseline||''}","${s.revision||''}","${s.strategy||''}","${s.notes||''}"\n`; }));
-            const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv'}))); link.setAttribute("download", `math_data_${a.name}.csv`); link.click();
+            if (!a) return;
+            let csv = `Grade: ${currentGrade}\nAssignment: ${a.name}\nName,Baseline,Revision,Strategy,Notes\n`;
+            rosters[currentGrade].forEach(n => {
+                const s = (activeScores[currentGrade] && activeScores[currentGrade][n]) || {};
+                csv += `"${n}","${s.baseline||''}","${s.revision||''}","${s.strategy||''}","${s.notes||''}"\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv'})));
+            link.setAttribute("download", `G${currentGrade}_${a.name}.csv`);
+            link.click();
         };
+
         function showMessage(t,y){ const c = document.getElementById('message-container'); const m = document.createElement('div'); m.className = `px-6 py-4 rounded-xl text-white font-bold shadow-lg transform transition-all animate-bounce ${y==='error'?'bg-red-600':'bg-blue-900'}`; m.innerText = t; c.appendChild(m); setTimeout(()=>m.remove(),3000); }
         
         startApp();
