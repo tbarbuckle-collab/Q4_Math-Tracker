@@ -16,7 +16,7 @@
         @keyframes pulse-animation {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
             70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
         }
         #modal-overlay, #setup-overlay, #delete-modal-overlay {
             display: none;
@@ -90,10 +90,10 @@
                 </div>
                 <div class="flex-grow text-center md:text-left">
                     <h3 class="text-2xl font-bold">Cloud Sync Required</h3>
-                    <p class="text-blue-100 mt-1">To enable real-time department syncing, you must provide your Firebase configuration code.</p>
+                    <p class="text-blue-100 mt-1">GitHub is live, but not yet connected to your school's database.</p>
                 </div>
                 <button onclick="openSetup()" class="bg-white text-blue-900 px-8 py-4 rounded-xl font-black hover:bg-blue-50 transition shadow-lg">
-                    CONNECT NOW
+                    CONNECT TO DATABASE
                 </button>
             </div>
         </div>
@@ -103,8 +103,8 @@
             <div class="flex items-center gap-4">
                 <i class="fa-solid fa-circle-exclamation text-2xl"></i>
                 <div>
-                    <h3 class="font-bold">Database Error</h3>
-                    <p id="error-description" class="text-sm opacity-90">Trying to connect...</p>
+                    <h3 class="font-bold">Database Connection Refused</h3>
+                    <p id="error-description" class="text-sm opacity-90">Checking security rules...</p>
                 </div>
             </div>
         </div>
@@ -144,18 +144,21 @@
         </div>
 
         <div class="mt-12 text-center text-[10px] text-slate-400 font-mono tracking-widest uppercase">
-            Tracker Version: 2.4 (Sync Diagnostic Build)
+            Tracker Version: 2.6 (Auto-Paste Fix)
         </div>
 
         <!-- Setup Modal -->
         <div id="setup-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
-                <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Step 4: Paste Cloud Key</h3>
-                <p class="text-sm text-slate-500 mb-6 text-center">Copy the curly braces { } section from Firebase and paste it below.</p>
-                <textarea id="config-input" placeholder='{"apiKey": "...", ...}' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
-                <div class="flex gap-4">
-                    <button onclick="closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
-                    <button id="apply-btn" onclick="saveConfig()" class="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg">Apply & Sync Now</button>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Cloud Settings</h3>
+                <p class="text-sm text-slate-500 mb-6 text-center">Paste your Firebase code here. Version 2.6 will automatically fix any formatting issues for you.</p>
+                <textarea id="config-input" placeholder='Paste your Firebase code here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
+                <div class="flex flex-col gap-3">
+                    <div class="flex gap-4">
+                        <button onclick="closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                        <button id="apply-btn" onclick="window.saveConfig()" class="flex-2 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg">Apply & Sync Now</button>
+                    </div>
+                    <button onclick="window.resetCloudConfig()" class="text-xs text-red-500 hover:text-red-700 font-bold uppercase tracking-widest py-2">Reset / Clear Connection Keys</button>
                 </div>
                 <div id="setup-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium"></div>
             </div>
@@ -193,7 +196,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const rosters = {
             6: ["Alonzo Floyd", "Kareem Plummer", "Davon Zeigler", "Sijae Bailey", "Erica Davis", "Mordecai Dennison", "Vy'Elle Parker", "Ivory Murray", "Aniyah Wilder", "Elizabeth Moss", "Phoenix Newton", "Jaleel Owens", "Elijah Powell", "Brooklyn Rhodes", "Chance Robinson", "Kennedy Ross", "Brooke Tabb", "London Washington", "Illian Williams"],
@@ -217,7 +220,7 @@
                     const app = initializeApp(config);
                     db = getFirestore(app);
                     auth = getAuth(app);
-                    appId = typeof __app_id !== 'undefined' ? __app_id : 'math-tracker-v2';
+                    appId = config.projectId || 'math-tracker-v2';
                     
                     onAuthStateChanged(auth, (user) => { 
                         if (user) { 
@@ -228,7 +231,7 @@
 
                     signInAnonymously(auth).catch(err => {
                         console.error(err);
-                        showSystemError("Auth Failed: Ensure 'Anonymous Login' is ENABLED in Firebase.");
+                        showSystemError("Connection Denied: Ensure 'Anonymous Login' is ENABLED in Firebase Authentication.");
                     });
                 } catch (e) { enableLocalFallback(); }
             } else { enableLocalFallback(); }
@@ -250,9 +253,9 @@
             }, (err) => {
                 console.error(err);
                 if (err.code === 'permission-denied') {
-                    showSystemError("Permission Denied: Ensure Firestore Rules are set to 'allow read, write: if true;'");
+                    showSystemError("Permission Denied: Please check your Firestore Rules tab.");
                 } else {
-                    showSystemError("Database Error: Is your GitHub URL added to 'Authorized Domains'?");
+                    showSystemError("Sync Error: Is your GitHub URL added to 'Authorized Domains'?");
                 }
             });
         }
@@ -293,6 +296,38 @@
             }
             updateStats();
         }
+
+        window.resetCloudConfig = () => {
+            if(confirm("This will clear your connection keys. You will need to paste your Firebase JSON again. Proceed?")) {
+                localStorage.removeItem('math_cloud_config');
+                location.reload();
+            }
+        }
+
+        window.saveConfig = () => { 
+            const input = document.getElementById('config-input').value.trim();
+            const btn = document.getElementById('apply-btn');
+            try {
+                let cleaned = input;
+                // 1. Extract content between braces
+                if (cleaned.includes('{') && cleaned.includes('}')) {
+                    cleaned = cleaned.substring(cleaned.indexOf('{'), cleaned.lastIndexOf('}') + 1);
+                }
+                
+                // 2. Fix unquoted keys (Version 2.6 fix)
+                // This regex finds keys like apiKey: and turns them into "apiKey":
+                cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9]+)\s*:/g, '$1"$2":');
+                
+                const configObj = JSON.parse(cleaned);
+                if (!configObj.apiKey) throw new Error("Key Missing");
+                localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
+                btn.innerText = "Connecting...";
+                setTimeout(() => location.reload(), 1000);
+            } catch (e) { 
+                console.error(e);
+                alert("Invalid format. Please make sure to copy the entire { ... } block."); 
+            }
+        };
 
         function renderTable() {
             const body = document.getElementById('student-table-body');
@@ -336,7 +371,6 @@
             el.classList.remove('hidden');
         }
 
-        // Standard helpers
         function updateStats() {
             let g = 0, c = 0, r = 0;
             Object.values(activeScores).forEach(gr => Object.values(gr).forEach(s => {
@@ -347,10 +381,12 @@
             document.getElementById('avg-growth').innerText = c > 0 ? `+ ${(g/c).toFixed(2)}` : '0.00';
             document.getElementById('revision-rate').innerText = t > 0 ? Math.round((r/t)*100) : '0';
         }
+
         function updateAssignmentUI() {
             const sel = document.getElementById('assignment-selector'); sel.innerHTML = '';
             assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId; sel.add(o); });
         }
+
         window.updateVal = updateVal;
         window.switchAssignment = (id) => { currentAssignmentId = id; isCloud ? loadAssignmentScores() : loadLocalData(); };
         window.showGrade = (g) => { currentGrade = g; document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active')); document.getElementById(`tab-${g}`).classList.add('tab-active'); renderTable(); };
@@ -361,7 +397,7 @@
             if(n){
                 const id = 'asgn_' + Date.now();
                 assignments.push({id, name: n, createdAt: new Date().toISOString()});
-                if(isCloud){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: assignments }); }
+                if(isCloud && db){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: assignments }); }
                 else { localStorage.setItem('math_meta', JSON.stringify(assignments)); }
                 switchAssignment(id); closeModal();
             }
@@ -377,21 +413,6 @@
         };
         window.openSetup = () => document.getElementById('setup-overlay').style.display = 'flex';
         window.closeSetup = () => document.getElementById('setup-overlay').style.display = 'none';
-        window.saveConfig = () => { 
-            const input = document.getElementById('config-input').value.trim();
-            const btn = document.getElementById('apply-btn');
-            try {
-                let cleaned = input;
-                if (cleaned.includes('{') && cleaned.includes('}')) {
-                    cleaned = cleaned.substring(cleaned.indexOf('{'), cleaned.lastIndexOf('}') + 1);
-                }
-                const configObj = JSON.parse(cleaned);
-                if (!configObj.apiKey) throw new Error("Key Missing");
-                localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
-                btn.innerText = "Connecting...";
-                setTimeout(() => location.reload(), 1000);
-            } catch (e) { alert("Invalid config format."); }
-        };
         window.filterStudents = () => { const q = document.getElementById('search').value.toLowerCase(); document.querySelectorAll('.student-row').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none'); };
         window.exportData = () => {
             const a = assignments.find(x => x.id === currentAssignmentId);
@@ -400,6 +421,7 @@
             const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv'}))); link.setAttribute("download", `math_data_${a.name}.csv`); link.click();
         };
         function showMessage(t,y){ const c = document.getElementById('message-container'); const m = document.createElement('div'); m.className = `px-6 py-4 rounded-xl text-white font-bold shadow-lg transform transition-all animate-bounce ${y==='error'?'bg-red-600':'bg-blue-900'}`; m.innerText = t; c.appendChild(m); setTimeout(()=>m.remove(),3000); }
+        
         startApp();
     </script>
 </body>
