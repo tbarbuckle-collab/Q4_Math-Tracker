@@ -46,19 +46,21 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-2 bg-white p-2 border border-slate-200 rounded-xl shadow-sm">
-                <span class="text-xs font-bold text-slate-400 ml-2 uppercase">Assignment</span>
-                <select id="assignment-selector" onchange="switchAssignment(this.value)" class="bg-transparent border-none focus:ring-0 font-bold text-blue-900 cursor-pointer text-sm">
-                </select>
-                <div class="flex gap-1 border-l border-slate-100 pl-2">
-                    <button onclick="openModal()" class="bg-blue-900 text-white w-8 h-8 rounded-lg hover:bg-blue-800 transition flex items-center justify-center" title="New Assignment">
-                        <i class="fa-solid fa-plus text-xs"></i>
+            <div class="flex items-center gap-3 bg-white p-2 border border-slate-200 rounded-xl shadow-sm">
+                <div class="flex flex-col px-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assignment</span>
+                    <select id="assignment-selector" onchange="switchAssignment(this.value)" class="bg-transparent border-none focus:ring-0 font-bold text-blue-900 cursor-pointer text-sm p-0">
+                    </select>
+                </div>
+                <div class="flex gap-2 border-l border-slate-100 pl-2 pr-1">
+                    <button onclick="openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-sm" title="New Assignment">
+                        <i class="fa-solid fa-plus text-base"></i>
                     </button>
-                    <button id="delete-btn" onclick="openDeleteModal()" class="bg-red-50 text-red-600 w-8 h-8 rounded-lg hover:bg-red-100 transition flex items-center justify-center" title="Delete Current Assignment">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    <button id="delete-btn" onclick="openDeleteModal()" class="bg-red-50 text-red-600 w-10 h-10 rounded-lg hover:bg-red-100 transition flex items-center justify-center" title="Delete Current Assignment">
+                        <i class="fa-solid fa-trash-can text-base"></i>
                     </button>
-                    <button onclick="openSetup()" class="bg-slate-100 text-slate-600 w-8 h-8 rounded-lg hover:bg-slate-200 transition flex items-center justify-center" title="Cloud Settings">
-                        <i class="fa-solid fa-gear text-xs"></i>
+                    <button onclick="openSetup()" class="bg-slate-800 text-white w-10 h-10 rounded-lg hover:bg-slate-700 transition flex items-center justify-center shadow-sm" title="Cloud Settings">
+                        <i class="fa-solid fa-gear text-base"></i>
                     </button>
                 </div>
             </div>
@@ -81,14 +83,18 @@
         </div>
 
         <!-- Connection Alert -->
-        <div id="config-alert" class="hidden mb-8 p-6 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl">
-            <div class="flex items-start gap-4">
-                <i class="fa-solid fa-cloud-slash text-amber-500 text-2xl mt-1"></i>
-                <div>
-                    <h3 class="font-bold text-amber-900">Cloud Connection Required</h3>
-                    <p class="text-amber-800 text-sm mt-1">To sync with the department, click below and paste the cloud config code from your Firebase console.</p>
-                    <button onclick="openSetup()" class="mt-4 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-700 transition">Enter Cloud Config</button>
+        <div id="config-alert" class="hidden mb-8 p-8 bg-blue-900 text-white rounded-2xl shadow-xl shadow-blue-900/20">
+            <div class="flex items-center gap-6">
+                <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-cloud-bolt text-3xl text-white"></i>
                 </div>
+                <div class="flex-grow">
+                    <h3 class="text-xl font-bold">Cloud Setup Required</h3>
+                    <p class="text-blue-100 mt-1">To enable real-time department syncing, you need to provide your Firebase configuration code.</p>
+                </div>
+                <button onclick="openSetup()" class="bg-white text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition whitespace-nowrap">
+                    Configure Now
+                </button>
             </div>
         </div>
 
@@ -188,7 +194,6 @@
         const startApp = async () => {
             let config = null;
             
-            // Set a timeout to show local mode if cloud takes too long to respond
             const connectionTimeout = setTimeout(() => {
                 if (!isCloud) {
                     console.warn("Connection timeout - switching to local mode UI");
@@ -337,10 +342,19 @@
         function updateSyncStatus(s) {
             const el = document.getElementById('sync-status');
             if (!el) return;
-            if (s === 'connected') el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Live Sync Active`;
-            else if (s === 'local') el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode`;
-            else if (s === 'error') el.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Sync Error`;
-            else el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Syncing...`;
+            if (s === 'connected') {
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Live Sync Active`;
+                el.className = 'sync-indicator text-emerald-600 font-bold';
+                document.getElementById('config-alert').classList.add('hidden');
+            } else if (s === 'local') {
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode`;
+                el.className = 'sync-indicator text-amber-600 font-bold';
+            } else if (s === 'error') {
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Sync Error`;
+                el.className = 'sync-indicator text-red-600 font-bold';
+            } else {
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Syncing...`;
+            }
         }
 
         function updateStats() {
