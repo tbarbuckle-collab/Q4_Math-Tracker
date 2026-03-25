@@ -30,7 +30,7 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 pb-16">
 
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
@@ -41,7 +41,7 @@
                     <p class="text-slate-500">Cycle of Professional Learning</p>
                     <div id="sync-status" class="sync-indicator text-slate-400">
                         <span class="w-2 h-2 rounded-full bg-slate-300"></span>
-                        Checking Cloud Status...
+                        Initializing System...
                     </div>
                 </div>
             </div>
@@ -52,14 +52,14 @@
                     <select id="assignment-selector" onchange="switchAssignment(this.value)" class="bg-transparent border-none focus:ring-0 font-bold text-blue-900 cursor-pointer text-sm p-0">
                     </select>
                 </div>
-                <div class="flex gap-2 border-l border-slate-100 pl-2 pr-1">
-                    <button onclick="openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-sm" title="New Assignment">
+                <div class="flex gap-2 border-l border-slate-200 pl-3 pr-1">
+                    <button onclick="openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-md">
                         <i class="fa-solid fa-plus text-base"></i>
                     </button>
-                    <button id="delete-btn" onclick="openDeleteModal()" class="bg-red-50 text-red-600 w-10 h-10 rounded-lg hover:bg-red-100 transition flex items-center justify-center" title="Delete Current Assignment">
+                    <button id="delete-btn" onclick="openDeleteModal()" class="bg-red-50 text-red-600 w-10 h-10 rounded-lg hover:bg-red-100 transition flex items-center justify-center border border-red-100">
                         <i class="fa-solid fa-trash-can text-base"></i>
                     </button>
-                    <button onclick="openSetup()" class="bg-slate-800 text-white w-10 h-10 rounded-lg hover:bg-slate-700 transition flex items-center justify-center shadow-sm" title="Cloud Settings">
+                    <button onclick="openSetup()" class="bg-slate-800 text-white w-10 h-10 rounded-lg hover:bg-slate-700 transition flex items-center justify-center shadow-md border-2 border-white">
                         <i class="fa-solid fa-gear text-base"></i>
                     </button>
                 </div>
@@ -82,19 +82,30 @@
             </div>
         </div>
 
-        <!-- Connection Alert -->
-        <div id="config-alert" class="hidden mb-8 p-8 bg-blue-900 text-white rounded-2xl shadow-xl shadow-blue-900/20">
-            <div class="flex items-center gap-6">
-                <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-cloud-bolt text-3xl text-white"></i>
+        <!-- BIG ALERT for Missing Config -->
+        <div id="config-alert" class="hidden mb-8 p-8 bg-blue-900 text-white rounded-2xl shadow-2xl">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-cloud-bolt text-3xl"></i>
                 </div>
-                <div class="flex-grow">
-                    <h3 class="text-xl font-bold">Cloud Setup Required</h3>
-                    <p class="text-blue-100 mt-1">To enable real-time department syncing, you need to provide your Firebase configuration code.</p>
+                <div class="flex-grow text-center md:text-left">
+                    <h3 class="text-2xl font-bold">Cloud Sync Required</h3>
+                    <p class="text-blue-100 mt-1">To enable real-time department syncing, you must provide your Firebase configuration code.</p>
                 </div>
-                <button onclick="openSetup()" class="bg-white text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition whitespace-nowrap">
-                    Configure Now
+                <button onclick="openSetup()" class="bg-white text-blue-900 px-8 py-4 rounded-xl font-black hover:bg-blue-50 transition shadow-lg">
+                    CONNECT NOW
                 </button>
+            </div>
+        </div>
+
+        <!-- Connection Error Alert -->
+        <div id="connection-error-alert" class="hidden mb-8 p-6 bg-red-600 text-white rounded-2xl shadow-lg">
+            <div class="flex items-center gap-4">
+                <i class="fa-solid fa-circle-exclamation text-2xl"></i>
+                <div>
+                    <h3 class="font-bold">Database Error</h3>
+                    <p id="error-description" class="text-sm opacity-90">Trying to connect...</p>
+                </div>
             </div>
         </div>
 
@@ -108,10 +119,10 @@
         <div class="mb-4 flex flex-col md:flex-row gap-4">
             <div class="relative flex-grow">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="search" placeholder="Filter student list..." class="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 outline-none shadow-sm bg-white" onkeyup="filterStudents()">
+                <input type="text" id="search" placeholder="Search student name..." class="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 outline-none shadow-sm bg-white" onkeyup="filterStudents()">
             </div>
             <button onclick="exportData()" class="bg-white text-slate-700 border border-slate-200 px-6 py-3 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-2 font-semibold shadow-sm">
-                <i class="fa-solid fa-file-csv"></i> Export Data
+                <i class="fa-solid fa-file-csv"></i> Export CSV
             </button>
         </div>
 
@@ -132,11 +143,29 @@
             </div>
         </div>
 
-        <!-- Modals -->
+        <div class="mt-12 text-center text-[10px] text-slate-400 font-mono tracking-widest uppercase">
+            Tracker Version: 2.4 (Sync Diagnostic Build)
+        </div>
+
+        <!-- Setup Modal -->
+        <div id="setup-overlay">
+            <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
+                <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Step 4: Paste Cloud Key</h3>
+                <p class="text-sm text-slate-500 mb-6 text-center">Copy the curly braces { } section from Firebase and paste it below.</p>
+                <textarea id="config-input" placeholder='{"apiKey": "...", ...}' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
+                <div class="flex gap-4">
+                    <button onclick="closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                    <button id="apply-btn" onclick="saveConfig()" class="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg">Apply & Sync Now</button>
+                </div>
+                <div id="setup-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium"></div>
+            </div>
+        </div>
+
+        <!-- Add/Delete Modals -->
         <div id="modal-overlay">
-            <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4">
+            <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">New Writing Task</h3>
-                <input type="text" id="new-assignment-name" placeholder="e.g. Unit 4 Math Probe" class="w-full p-4 border border-slate-200 rounded-xl mb-8 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50">
+                <input type="text" id="new-assignment-name" placeholder="e.g. Unit 4 Math Probe" class="w-full p-4 border border-slate-200 rounded-xl mb-8 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 text-center">
                 <div class="flex gap-4">
                     <button onclick="closeModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
                     <button onclick="handleModalSubmit()" class="flex-1 py-4 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 transition">Create</button>
@@ -144,29 +173,16 @@
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal -->
         <div id="delete-modal-overlay">
-            <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4">
+            <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 mx-auto">
                     <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-center text-slate-800 mb-2">Delete Assignment?</h3>
-                <p class="text-slate-500 text-center mb-8">This will permanently remove all student scores and notes for <span id="delete-asgn-name" class="font-bold text-slate-800"></span>. This action cannot be undone.</p>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">Delete Assignment?</h3>
+                <p class="text-slate-500 mb-8">Permanently remove <span id="delete-asgn-name" class="font-bold text-slate-800"></span>? This cannot be undone.</p>
                 <div class="flex gap-4">
                     <button onclick="closeDeleteModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
-                    <button onclick="handleConfirmDelete()" class="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition">Delete Data</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="setup-overlay">
-            <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
-                <h3 class="text-2xl font-bold text-slate-800 mb-2">Cloud Configuration</h3>
-                <p class="text-sm text-slate-500 mb-4">Paste your Firebase configuration object here. This is found in Project Settings > General > Your Apps.</p>
-                <textarea id="config-input" placeholder='Paste Config JSON here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
-                <div class="flex gap-4">
-                    <button onclick="closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
-                    <button onclick="saveConfig()" class="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Sync Now</button>
+                    <button onclick="handleConfirmDelete()" class="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition">Delete</button>
                 </div>
             </div>
         </div>
@@ -193,49 +209,29 @@
 
         const startApp = async () => {
             let config = null;
-            
-            const connectionTimeout = setTimeout(() => {
-                if (!isCloud) {
-                    console.warn("Connection timeout - switching to local mode UI");
-                    enableLocalFallback();
-                }
-            }, 7000);
-
-            try { if (typeof __firebase_config !== 'undefined') config = JSON.parse(__firebase_config); } catch(e) {}
-            if (!config) {
-                const stored = localStorage.getItem('math_cloud_config');
-                if (stored) {
-                    try { config = JSON.parse(stored); } catch(e) { console.error("Invalid stored config"); }
-                }
-            }
+            const stored = localStorage.getItem('math_cloud_config');
+            if (stored) { try { config = JSON.parse(stored); } catch(e) {} }
 
             if (config && config.apiKey) {
                 try {
                     const app = initializeApp(config);
                     db = getFirestore(app);
                     auth = getAuth(app);
-                    appId = typeof __app_id !== 'undefined' ? __app_id : 'math-dept-sync';
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'math-tracker-v2';
                     
                     onAuthStateChanged(auth, (user) => { 
-                        if (user) {
-                            clearTimeout(connectionTimeout);
-                            isCloud = true;
+                        if (user) { 
+                            isCloud = true; 
                             setupSync(); 
-                        }
+                        } 
                     });
 
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (e) { 
-                    console.error("Firebase setup failed", e);
-                    enableLocalFallback(); 
-                }
-            } else { 
-                enableLocalFallback(); 
-            }
+                    signInAnonymously(auth).catch(err => {
+                        console.error(err);
+                        showSystemError("Auth Failed: Ensure 'Anonymous Login' is ENABLED in Firebase.");
+                    });
+                } catch (e) { enableLocalFallback(); }
+            } else { enableLocalFallback(); }
         };
 
         function enableLocalFallback() {
@@ -248,16 +244,16 @@
         function setupSync() {
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list');
             onSnapshot(metaRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    assignments = docSnap.data().items || assignments;
-                    assignments = assignments.filter(a => a && a.id);
-                    if (assignments.length === 0) assignments = [{ id: 'default_assignment', name: 'Baseline Assessment' }];
-                    updateAssignmentUI();
-                } else { setDoc(metaRef, { items: assignments }); }
+                assignments = docSnap.exists() ? docSnap.data().items : assignments;
+                updateAssignmentUI();
                 loadAssignmentScores();
             }, (err) => {
-                console.error("Meta sync error", err);
-                enableLocalFallback();
+                console.error(err);
+                if (err.code === 'permission-denied') {
+                    showSystemError("Permission Denied: Ensure Firestore Rules are set to 'allow read, write: if true;'");
+                } else {
+                    showSystemError("Database Error: Is your GitHub URL added to 'Authorized Domains'?");
+                }
             });
         }
 
@@ -271,17 +267,12 @@
                 updateSyncStatus('connected');
                 renderTable();
                 updateStats();
-            }, (err) => {
-                console.error("Score sync error", err);
-                updateSyncStatus('error');
-            });
+            }, (err) => updateSyncStatus('error'));
         }
 
         function loadLocalData() {
             const m = localStorage.getItem('math_meta');
-            if (m) {
-                try { assignments = JSON.parse(m); } catch(e) {}
-            }
+            if (m) { try { assignments = JSON.parse(m); } catch(e) {} }
             const s = localStorage.getItem(`math_scores_${currentAssignmentId}`);
             activeScores = s ? JSON.parse(s) : { 6: {}, 7: {}, 8: {} };
             updateAssignmentUI();
@@ -293,24 +284,14 @@
             if (!activeScores[grade]) activeScores[grade] = {};
             if (!activeScores[grade][name]) activeScores[grade][name] = { baseline: '', revision: '', strategy: '', notes: '' };
             activeScores[grade][name][field] = val;
-            
             if (isCloud && auth && auth.currentUser) {
-                try {
-                    const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
-                    await setDoc(scoreRef, { grades: activeScores }, { merge: true });
-                } catch (e) { 
-                    console.error("Cloud update failed", e);
-                    saveLocalData(); 
-                }
+                const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
+                await setDoc(scoreRef, { grades: activeScores }, { merge: true });
             } else {
-                saveLocalData();
+                localStorage.setItem(`math_scores_${currentAssignmentId}`, JSON.stringify(activeScores));
+                localStorage.setItem('math_meta', JSON.stringify(assignments));
             }
             updateStats();
-        }
-
-        function saveLocalData() {
-            localStorage.setItem(`math_scores_${currentAssignmentId}`, JSON.stringify(activeScores));
-            localStorage.setItem('math_meta', JSON.stringify(assignments));
         }
 
         function renderTable() {
@@ -342,21 +323,20 @@
         function updateSyncStatus(s) {
             const el = document.getElementById('sync-status');
             if (!el) return;
-            if (s === 'connected') {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Live Sync Active`;
-                el.className = 'sync-indicator text-emerald-600 font-bold';
-                document.getElementById('config-alert').classList.add('hidden');
-            } else if (s === 'local') {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Mode`;
-                el.className = 'sync-indicator text-amber-600 font-bold';
-            } else if (s === 'error') {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Sync Error`;
-                el.className = 'sync-indicator text-red-600 font-bold';
-            } else {
-                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Syncing...`;
-            }
+            if (s === 'connected') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse"></span> Department Live`; el.className = 'sync-indicator text-emerald-600 font-bold'; document.getElementById('config-alert').classList.add('hidden'); document.getElementById('connection-error-alert').classList.add('hidden'); }
+            else if (s === 'local') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline Mode`; el.className = 'sync-indicator text-amber-600 font-bold'; }
+            else if (s === 'error') { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Connection Error`; el.className = 'sync-indicator text-red-600 font-bold'; }
+            else { el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-300"></span> Syncing...`; }
         }
 
+        function showSystemError(msg) {
+            const el = document.getElementById('connection-error-alert');
+            const desc = document.getElementById('error-description');
+            desc.innerText = msg;
+            el.classList.remove('hidden');
+        }
+
+        // Standard helpers
         function updateStats() {
             let g = 0, c = 0, r = 0;
             Object.values(activeScores).forEach(gr => Object.values(gr).forEach(s => {
@@ -367,42 +347,10 @@
             document.getElementById('avg-growth').innerText = c > 0 ? `+ ${(g/c).toFixed(2)}` : '0.00';
             document.getElementById('revision-rate').innerText = t > 0 ? Math.round((r/t)*100) : '0';
         }
-
         function updateAssignmentUI() {
             const sel = document.getElementById('assignment-selector'); sel.innerHTML = '';
-            assignments.forEach(a => {
-                const o = document.createElement('option');
-                o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId;
-                sel.add(o);
-            });
-            const deleteBtn = document.getElementById('delete-btn');
-            if (assignments.length <= 1) deleteBtn.classList.add('opacity-30', 'pointer-events-none');
-            else deleteBtn.classList.remove('opacity-30', 'pointer-events-none');
+            assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId; sel.add(o); });
         }
-
-        async function createNewAssignment(n) {
-            const id = 'asgn_' + Date.now();
-            assignments.push({id, name: n, createdAt: new Date().toISOString()});
-            if(isCloud && db){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: assignments }); }
-            else { saveLocalData(); }
-            switchAssignment(id);
-        }
-
-        async function performDeletion() {
-            const idToDelete = currentAssignmentId;
-            const remainingAssignments = assignments.filter(a => a.id !== idToDelete);
-            if (isCloud && db) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: remainingAssignments });
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', idToDelete));
-            } else {
-                localStorage.setItem('math_meta', JSON.stringify(remainingAssignments));
-                localStorage.removeItem(`math_scores_${idToDelete}`);
-            }
-            assignments = remainingAssignments;
-            switchAssignment(assignments[0].id);
-            showMessage("Assignment Deleted", "error");
-        }
-
         window.updateVal = updateVal;
         window.switchAssignment = (id) => { currentAssignmentId = id; isCloud ? loadAssignmentScores() : loadLocalData(); };
         window.showGrade = (g) => { currentGrade = g; document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active')); document.getElementById(`tab-${g}`).classList.add('tab-active'); renderTable(); };
@@ -410,35 +358,41 @@
         window.closeModal = () => { document.getElementById('modal-overlay').style.display = 'none'; document.getElementById('new-assignment-name').value = ''; };
         window.handleModalSubmit = async () => {
             const n = document.getElementById('new-assignment-name').value;
-            if(n){ await createNewAssignment(n); closeModal(); }
+            if(n){
+                const id = 'asgn_' + Date.now();
+                assignments.push({id, name: n, createdAt: new Date().toISOString()});
+                if(isCloud){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: assignments }); }
+                else { localStorage.setItem('math_meta', JSON.stringify(assignments)); }
+                switchAssignment(id); closeModal();
+            }
         };
-        window.openDeleteModal = () => {
-            const asgn = assignments.find(a => a.id === currentAssignmentId);
-            document.getElementById('delete-asgn-name').innerText = asgn ? asgn.name : "this task";
-            document.getElementById('delete-modal-overlay').style.display = 'flex';
-        };
+        window.openDeleteModal = () => { const asgn = assignments.find(a => a.id === currentAssignmentId); document.getElementById('delete-asgn-name').innerText = asgn ? asgn.name : "this task"; document.getElementById('delete-modal-overlay').style.display = 'flex'; };
         window.closeDeleteModal = () => document.getElementById('delete-modal-overlay').style.display = 'none';
         window.handleConfirmDelete = async () => {
-            await performDeletion();
-            closeDeleteModal();
+            const idToDelete = currentAssignmentId;
+            const remainingAssignments = assignments.filter(a => a.id !== idToDelete);
+            if (isCloud) { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', 'list'), { items: remainingAssignments }); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', idToDelete)); }
+            else { localStorage.setItem('math_meta', JSON.stringify(remainingAssignments)); localStorage.removeItem(`math_scores_${idToDelete}`); }
+            assignments = remainingAssignments; switchAssignment(assignments[0].id); closeDeleteModal(); showMessage("Removed", "error");
         };
-        window.openSetup = () => {
-            document.getElementById('setup-overlay').style.display = 'flex';
-            const current = localStorage.getItem('math_cloud_config');
-            if (current) document.getElementById('config-input').value = current;
-        };
+        window.openSetup = () => document.getElementById('setup-overlay').style.display = 'flex';
         window.closeSetup = () => document.getElementById('setup-overlay').style.display = 'none';
         window.saveConfig = () => { 
-            const v = document.getElementById('config-input').value; 
-            if(v){ 
-                localStorage.setItem('math_cloud_config', v); 
-                location.reload(); 
-            } 
+            const input = document.getElementById('config-input').value.trim();
+            const btn = document.getElementById('apply-btn');
+            try {
+                let cleaned = input;
+                if (cleaned.includes('{') && cleaned.includes('}')) {
+                    cleaned = cleaned.substring(cleaned.indexOf('{'), cleaned.lastIndexOf('}') + 1);
+                }
+                const configObj = JSON.parse(cleaned);
+                if (!configObj.apiKey) throw new Error("Key Missing");
+                localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
+                btn.innerText = "Connecting...";
+                setTimeout(() => location.reload(), 1000);
+            } catch (e) { alert("Invalid config format."); }
         };
-        window.filterStudents = () => {
-            const q = document.getElementById('search').value.toLowerCase();
-            document.querySelectorAll('.student-row').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none');
-        };
+        window.filterStudents = () => { const q = document.getElementById('search').value.toLowerCase(); document.querySelectorAll('.student-row').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none'); };
         window.exportData = () => {
             const a = assignments.find(x => x.id === currentAssignmentId);
             let csv = `Assignment: ${a.name}\nGrade,Name,Baseline,Revision,Strategy,Notes\n`;
