@@ -10,7 +10,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .tab-active { border-bottom: 3px solid #005088; color: #005088; font-weight: 700; }
-        .score-input { width: 60px; text-align: center; }
+        .score-input { width: 55px; text-align: center; }
         .sync-indicator { font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
         .pulse { animation: pulse-animation 2s infinite; }
         @keyframes pulse-animation {
@@ -32,13 +32,12 @@
 </head>
 <body class="p-4 md:p-8 pb-16">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
+    <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-800">Q4 Math Writing Tracker</h1>
                 <div class="flex items-center gap-3">
-                    <p class="text-slate-500">Cycle of Professional Learning</p>
+                    <p class="text-slate-500">Cycle 4: Revision & Transfer</p>
                     <div id="sync-status" class="sync-indicator text-slate-400">
                         <span class="w-2 h-2 rounded-full bg-slate-300"></span>
                         <span id="sync-text">Checking connection...</span>
@@ -48,12 +47,12 @@
             
             <div class="flex items-center gap-3 bg-white p-2 border border-slate-200 rounded-xl shadow-sm">
                 <div class="flex flex-col px-2">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assignment</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Task</span>
                     <select id="assignment-selector" onchange="window.switchAssignment(this.value)" class="bg-transparent border-none focus:ring-0 font-bold text-blue-900 cursor-pointer text-sm p-0">
                     </select>
                 </div>
                 <div class="flex gap-2 border-l border-slate-200 pl-3 pr-1">
-                    <button onclick="window.openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-md" title="New Assignment">
+                    <button onclick="window.openModal()" class="bg-blue-900 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition flex items-center justify-center shadow-md">
                         <i class="fa-solid fa-plus text-base"></i>
                     </button>
                     <button id="delete-btn" onclick="window.openDeleteModal()" class="bg-red-50 text-red-600 w-10 h-10 rounded-lg hover:bg-red-100 transition flex items-center justify-center border border-red-100">
@@ -66,76 +65,24 @@
             </div>
         </div>
 
-        <!-- Dashboard Stats -->
-        <div id="stats-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="text-slate-400 text-xs font-bold uppercase mb-2">Total Students</div>
-                <div id="total-students" class="text-4xl font-bold text-slate-800">--</div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="text-slate-400 text-xs font-bold uppercase mb-2">Avg Growth</div>
-                <div id="avg-growth" class="text-4xl font-bold text-emerald-600">+ --</div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="text-slate-400 text-xs font-bold uppercase mb-2">Revision Rate</div>
-                <div id="revision-rate" class="text-4xl font-bold text-blue-900">--%</div>
-            </div>
-        </div>
-
-        <!-- BIG ALERT for Missing Config -->
-        <div id="config-alert" class="hidden mb-8 p-8 bg-blue-900 text-white rounded-2xl shadow-2xl">
-            <div class="flex flex-col md:flex-row items-center gap-6">
-                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-cloud-bolt text-3xl"></i>
-                </div>
-                <div class="flex-grow text-center md:text-left">
-                    <h3 class="text-2xl font-bold">Cloud Sync Required</h3>
-                    <p class="text-blue-100 mt-1">GitHub is live, but not yet connected to your database.</p>
-                </div>
-                <button onclick="window.openSetup()" class="bg-white text-blue-900 px-8 py-4 rounded-xl font-black hover:bg-blue-50 transition shadow-lg">
-                    CONNECT TO DATABASE
-                </button>
-            </div>
-        </div>
-
-        <!-- Connection Error Alert -->
-        <div id="connection-error-alert" class="hidden mb-8 p-6 bg-red-600 text-white rounded-2xl shadow-lg">
-            <div class="flex items-center gap-4">
-                <i class="fa-solid fa-circle-exclamation text-2xl"></i>
-                <div>
-                    <h3 class="font-bold">Database Connection Refused</h3>
-                    <p id="error-description" class="text-sm opacity-90">Please check your Firebase rules.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Grade Tabs -->
         <div class="flex border-b border-slate-200 mb-6 bg-white rounded-t-2xl overflow-hidden px-4">
             <button onclick="window.showGrade(6)" id="tab-6" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition tab-active">Grade 6</button>
             <button onclick="window.showGrade(7)" id="tab-7" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 7</button>
             <button onclick="window.showGrade(8)" id="tab-8" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 8</button>
         </div>
 
-        <div class="mb-4 flex flex-col md:flex-row gap-4">
-            <div class="relative flex-grow">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="search" placeholder="Search student name..." class="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 outline-none shadow-sm bg-white" onkeyup="window.filterStudents()">
-            </div>
-            <button onclick="window.exportData()" class="bg-white text-slate-700 border border-slate-200 px-6 py-3 rounded-xl hover:bg-slate-50 transition flex items-center justify-center gap-2 font-semibold shadow-sm">
-                <i class="fa-solid fa-file-csv"></i> Export CSV
-            </button>
-        </div>
-
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                            <th class="p-5">Student Name</th>
-                            <th class="p-5">Baseline</th>
-                            <th class="p-5">Revision</th>
-                            <th class="p-5">TWR Strategy</th>
-                            <th class="p-5">Observations</th>
+                        <tr class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="p-4">Student Name</th>
+                            <th class="p-4 text-center">Baseline</th>
+                            <th class="p-4 text-center">Revision (Substance)</th>
+                            <th class="p-4 text-center">Editing (Polishing)</th>
+                            <th class="p-4">TWR Strategy Focus</th>
+                            <th class="p-4 text-center">Feedback Applied?</th>
+                            <th class="p-4">Observations</th>
                         </tr>
                     </thead>
                     <tbody id="student-table-body" class="divide-y divide-slate-100"></tbody>
@@ -145,34 +92,21 @@
 
         <div class="mt-12 text-center">
             <div class="text-[10px] text-slate-400 font-mono tracking-widest uppercase mb-2">
-                Tracker Version: 2.8 (Crash-Proof Build)
+                Tracker Version: 2.9 (Cycle 4 Pedagogical Alignment)
             </div>
             <button onclick="window.resetCloudConfig(true)" class="text-[9px] text-slate-300 hover:text-red-400 font-bold uppercase underline">
-                Stuck? Click here to Reset Connection
+                Reset Connection
             </button>
         </div>
 
-        <!-- Setup Modal -->
-        <div id="setup-overlay">
-            <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
-                <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Step 4: Paste Cloud Key</h3>
-                <p class="text-sm text-slate-500 mb-6 text-center">Paste the code you copied from Firebase below. <br>I will automatically fix any formatting errors.</p>
-                <textarea id="config-input" placeholder='Paste code here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
-                <div class="flex flex-col gap-3">
-                    <div class="flex gap-4">
-                        <button onclick="window.closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
-                        <button id="apply-btn" onclick="window.saveConfig()" class="flex-2 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg">Apply & Sync Now</button>
-                    </div>
-                </div>
-                <div id="setup-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium"></div>
-            </div>
-        </div>
-
-        <!-- Modals -->
         <div id="modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">New Grade <span id="add-modal-grade"></span> Task</h3>
-                <input type="text" id="new-assignment-name" placeholder="e.g. Unit 4 Probe" class="w-full p-4 border border-slate-200 rounded-xl mb-8 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 text-center">
+                <input type="text" id="new-assignment-name" placeholder="e.g. MCAP Item 123" class="w-full p-4 border border-slate-200 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 text-center">
+                <select id="task-mode" class="w-full p-4 border border-slate-200 rounded-xl mb-8 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 text-sm">
+                    <option value="Transfer">Independent Transfer (Original Draft)</option>
+                    <option value="Unelaborated">Unelaborated Paragraph (Collaborative Practice)</option>
+                </select>
                 <div class="flex gap-4">
                     <button onclick="window.closeModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
                     <button onclick="window.handleModalSubmit()" class="flex-1 py-4 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 transition">Create</button>
@@ -180,13 +114,25 @@
             </div>
         </div>
 
+        <div id="setup-overlay">
+            <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
+                <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Cloud Settings</h3>
+                <p class="text-sm text-slate-500 mb-6 text-center">Paste Firebase JSON to enable live department sync.</p>
+                <textarea id="config-input" placeholder='Paste code here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
+                <div class="flex gap-4">
+                    <button onclick="window.closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                    <button id="apply-btn" onclick="window.saveConfig()" class="flex-2 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg">Apply & Sync</button>
+                </div>
+            </div>
+        </div>
+
         <div id="delete-modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 mx-auto">
-                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                    <i class="fa-solid fa-trash-can text-2xl"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Delete Assignment?</h3>
-                <p class="text-slate-500 mb-8">Permanently remove <span id="delete-asgn-name" class="font-bold text-slate-800"></span>?</p>
+                <p class="text-slate-500 mb-8">This will permanently remove data for <span id="delete-asgn-name" class="font-bold text-slate-800"></span>.</p>
                 <div class="flex gap-4">
                     <button onclick="window.closeDeleteModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
                     <button onclick="window.handleConfirmDelete()" class="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition">Delete</button>
@@ -195,6 +141,14 @@
         </div>
 
         <div id="message-container" class="fixed bottom-6 right-6 z-[2000] flex flex-col gap-2"></div>
+        <div id="config-alert" class="hidden fixed bottom-6 left-6 z-[1000] p-6 bg-blue-900 text-white rounded-2xl shadow-2xl max-w-xs">
+            <h3 class="font-bold mb-1">Cloud Sync Needed</h3>
+            <p class="text-xs text-blue-100 mb-4">Connect to the database to share data with your team.</p>
+            <button onclick="window.openSetup()" class="bg-white text-blue-900 px-4 py-2 rounded-lg text-xs font-bold w-full">Connect Now</button>
+        </div>
+        <div id="connection-error-alert" class="hidden fixed top-6 right-6 z-[2000] p-4 bg-red-600 text-white rounded-xl shadow-lg">
+            <p id="error-description" class="text-xs font-bold"></p>
+        </div>
     </div>
 
     <script type="module">
@@ -202,7 +156,7 @@
         import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- GLOBAL EXPORTS (Must be at top for button reliability) ---
+        // --- GLOBAL EXPORTS ---
         window.openSetup = () => { document.getElementById('setup-overlay').style.display = 'flex'; };
         window.closeSetup = () => { document.getElementById('setup-overlay').style.display = 'none'; };
         window.openModal = () => { document.getElementById('add-modal-grade').innerText = currentGrade; document.getElementById('modal-overlay').style.display = 'flex'; };
@@ -238,15 +192,8 @@
                     db = getFirestore(app);
                     auth = getAuth(app);
                     appId = config.projectId || 'math-tracker-v2';
-                    
-                    onAuthStateChanged(auth, (user) => { 
-                        if (user) { isCloud = true; setupSync(); } 
-                    });
-
-                    signInAnonymously(auth).catch(err => {
-                        console.error(err);
-                        showSystemError("Auth Denied: Check 'Anonymous Login' in Firebase.");
-                    });
+                    onAuthStateChanged(auth, (user) => { if (user) { isCloud = true; setupSync(); } });
+                    signInAnonymously(auth).catch(() => showSystemError("Auth Failed: Check Anonymous Login."));
                 } catch (e) { enableLocalFallback(); }
             } else { enableLocalFallback(); }
         };
@@ -263,10 +210,9 @@
             if (unsubMeta) unsubMeta();
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`);
             unsubMeta = onSnapshot(metaRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    assignments = docSnap.data().items || [];
-                } else {
-                    assignments = [{ id: `default_g${currentGrade}`, name: `Grade ${currentGrade} Baseline` }];
+                assignments = docSnap.exists() ? docSnap.data().items || [] : [];
+                if (assignments.length === 0) {
+                    assignments = [{ id: `default_g${currentGrade}`, name: `Grade ${currentGrade} Baseline`, mode: 'Transfer' }];
                     setDoc(metaRef, { items: assignments });
                 }
                 if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) {
@@ -274,9 +220,7 @@
                 }
                 updateAssignmentUI();
                 loadAssignmentScores();
-            }, (err) => {
-                showSystemError("Permissions Denied: Update your Firestore Rules.");
-            });
+            }, () => showSystemError("Permission Denied: Check Firestore Rules."));
         }
 
         let unsubScores = null;
@@ -289,29 +233,25 @@
                 activeScores = docSnap.exists() ? docSnap.data().grades : { 6: {}, 7: {}, 8: {} };
                 updateSyncStatus('connected');
                 renderTable();
-                updateStats();
-            }, (err) => updateSyncStatus('error'));
+            }, () => updateSyncStatus('error'));
         }
 
         function loadLocalData() {
             const m = localStorage.getItem(`math_meta_g${currentGrade}`);
-            if (m) { try { assignments = JSON.parse(m); } catch(e) {} } 
-            else { assignments = [{ id: `local_g${currentGrade}`, name: `Grade ${currentGrade} Initial` }]; }
-
-            if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) {
-                currentAssignmentId = assignments[0].id;
-            }
+            assignments = m ? JSON.parse(m) : [{ id: `local_g${currentGrade}`, name: `Grade ${currentGrade} Initial`, mode: 'Transfer' }];
+            if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) currentAssignmentId = assignments[0].id;
             const s = localStorage.getItem(`math_scores_${currentAssignmentId}`);
             activeScores = s ? JSON.parse(s) : { 6: {}, 7: {}, 8: {} };
             updateAssignmentUI();
             renderTable();
-            updateStats();
         }
 
         window.updateVal = async (grade, name, field, val) => {
             if (!activeScores[grade]) activeScores[grade] = {};
-            if (!activeScores[grade][name]) activeScores[grade][name] = { baseline: '', revision: '', strategy: '', notes: '' };
-            activeScores[grade][name][field] = val;
+            if (!activeScores[grade][name]) activeScores[grade][name] = { baseline: '', revision: '', editing: '', strategy: '', feedback: false, notes: '' };
+            
+            if (field === 'feedback') activeScores[grade][name][field] = val === 'true';
+            else activeScores[grade][name][field] = val;
             
             if (isCloud && auth && auth.currentUser) {
                 const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
@@ -319,39 +259,6 @@
             } else {
                 localStorage.setItem(`math_scores_${currentAssignmentId}`, JSON.stringify(activeScores));
                 localStorage.setItem(`math_meta_g${currentGrade}`, JSON.stringify(assignments));
-            }
-            updateStats();
-        };
-
-        window.saveConfig = () => { 
-            const input = document.getElementById('config-input').value.trim();
-            const btn = document.getElementById('apply-btn');
-            const errEl = document.getElementById('setup-error');
-            try {
-                errEl.classList.add('hidden');
-                let cleaned = input;
-                if (cleaned.includes('{')) {
-                    cleaned = cleaned.substring(cleaned.indexOf('{'), cleaned.lastIndexOf('}') + 1);
-                }
-                // Smart Quote Fix for standard JavaScript objects
-                cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9]+)\s*:/g, '$1"$2":');
-                
-                const configObj = JSON.parse(cleaned);
-                if (!configObj.apiKey) throw new Error("Key Missing");
-                
-                localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
-                btn.innerText = "Syncing...";
-                setTimeout(() => location.reload(), 1000);
-            } catch (e) { 
-                errEl.innerText = "Invalid format. Make sure you copy the { } block correctly.";
-                errEl.classList.remove('hidden');
-            }
-        };
-
-        window.resetCloudConfig = (confirmReset) => {
-            if(!confirmReset || confirm("Clear all connection data? This will restart the app.")) {
-                localStorage.removeItem('math_cloud_config');
-                location.reload();
             }
         };
 
@@ -362,17 +269,28 @@
             isCloud ? setupSync() : loadLocalData();
         };
 
-        window.switchAssignment = (id) => {
-            currentAssignmentId = id;
-            isCloud ? loadAssignmentScores() : loadLocalData();
+        window.switchAssignment = (id) => { currentAssignmentId = id; isCloud ? loadAssignmentScores() : loadLocalData(); };
+
+        window.saveConfig = () => {
+            const input = document.getElementById('config-input').value.trim();
+            try {
+                let cleaned = input.includes('{') ? input.substring(input.indexOf('{'), input.lastIndexOf('}') + 1) : input;
+                cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9]+)\s*:/g, '$1"$2":');
+                const configObj = JSON.parse(cleaned);
+                localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
+                location.reload();
+            } catch (e) { alert("Invalid format. Copy the entire { } block."); }
         };
+
+        window.resetCloudConfig = (confirmReset) => { if(!confirmReset || confirm("Restart and clear keys?")) { localStorage.removeItem('math_cloud_config'); location.reload(); } };
 
         window.handleModalSubmit = async () => {
             const n = document.getElementById('new-assignment-name').value;
+            const mode = document.getElementById('task-mode').value;
             if(n){
                 const id = `asgn_g${currentGrade}_${Date.now()}`;
-                assignments.push({id, name: n, createdAt: new Date().toISOString()});
-                if(isCloud){ await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`), { items: assignments }); } 
+                assignments.push({id, name: n, mode, createdAt: new Date().toISOString()});
+                if(isCloud) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`), { items: assignments });
                 else { localStorage.setItem(`math_meta_g${currentGrade}`, JSON.stringify(assignments)); switchAssignment(id); }
                 closeModal();
             }
@@ -391,98 +309,52 @@
                 switchAssignment(assignments.length > 0 ? assignments[0].id : '');
             }
             closeDeleteModal();
-            showMessage("Deleted", "error");
-        };
-
-        window.filterStudents = () => {
-            const q = document.getElementById('search').value.toLowerCase();
-            document.querySelectorAll('.student-row').forEach(r => r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none');
-        };
-
-        window.exportData = () => {
-            const a = assignments.find(x => x.id === currentAssignmentId);
-            if (!a) return;
-            let csv = `Grade: ${currentGrade}\nAssignment: ${a.name}\nName,Baseline,Revision,Strategy,Notes\n`;
-            rosters[currentGrade].forEach(n => {
-                const s = (activeScores[currentGrade] && activeScores[currentGrade][n]) || {};
-                csv += `"${n}","${s.baseline||''}","${s.revision||''}","${s.strategy||''}","${s.notes||''}"\n`;
-            });
-            const link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv'})));
-            link.setAttribute("download", `G${currentGrade}_Data.csv`);
-            link.click();
         };
 
         function renderTable() {
             const body = document.getElementById('student-table-body');
             body.innerHTML = '';
-            if (!currentAssignmentId) {
-                body.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400">Add an assignment to begin.</td></tr>';
-                return;
-            }
+            if (!currentAssignmentId) { body.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400">Add an assignment to begin Cycle 4 monitoring.</td></tr>'; return; }
+            
             rosters[currentGrade].forEach(name => {
                 const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || {};
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50 transition student-row';
+                row.className = 'hover:bg-slate-50 transition';
                 row.innerHTML = `
-                    <td class="p-5 font-semibold text-slate-700">${name}</td>
-                    <td class="p-5"><input type="number" min="0" max="4" value="${s.baseline || ''}" class="p-2 border border-slate-200 rounded-lg score-input focus:ring-2 focus:ring-blue-900 outline-none" onchange="window.updateVal(${currentGrade}, '${name}', 'baseline', this.value)"></td>
-                    <td class="p-5"><input type="number" min="0" max="4" value="${s.revision || ''}" class="p-2 border border-slate-200 rounded-lg score-input focus:ring-2 focus:ring-blue-900 outline-none" onchange="window.updateVal(${currentGrade}, '${name}', 'revision', this.value)"></td>
-                    <td class="p-5">
-                        <select class="p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none text-xs w-full" onchange="window.updateVal(${currentGrade}, '${name}', 'strategy', this.value)">
-                            <option value="">None</option>
-                            <option value="Vocab" ${s.strategy === 'Vocab' ? 'selected' : ''}>Vocab</option>
+                    <td class="p-4 font-semibold text-slate-700 text-sm">${name}</td>
+                    <td class="p-4 text-center"><input type="number" min="0" max="4" value="${s.baseline || ''}" class="p-2 border border-slate-200 rounded score-input focus:ring-2 focus:ring-blue-900 outline-none text-xs" onchange="window.updateVal(${currentGrade}, '${name}', 'baseline', this.value)"></td>
+                    <td class="p-4 text-center"><input type="number" min="0" max="4" value="${s.revision || ''}" class="p-2 border border-blue-200 rounded score-input focus:ring-2 focus:ring-blue-900 outline-none text-xs bg-blue-50/30" onchange="window.updateVal(${currentGrade}, '${name}', 'revision', this.value)"></td>
+                    <td class="p-4 text-center"><input type="number" min="0" max="4" value="${s.editing || ''}" class="p-2 border border-slate-200 rounded score-input focus:ring-2 focus:ring-blue-900 outline-none text-xs" onchange="window.updateVal(${currentGrade}, '${name}', 'editing', this.value)"></td>
+                    <td class="p-4">
+                        <select class="p-2 border border-slate-200 rounded focus:ring-2 focus:ring-blue-900 outline-none text-[10px] w-full" onchange="window.updateVal(${currentGrade}, '${name}', 'strategy', this.value)">
+                            <option value="">Select...</option>
                             <option value="Expansion" ${s.strategy === 'Expansion' ? 'selected' : ''}>Expansion</option>
+                            <option value="Summary" ${s.strategy === 'Summary' ? 'selected' : ''}>Summary Sentences</option>
+                            <option value="Combining" ${s.strategy === 'Combining' ? 'selected' : ''}>Combining Sentences</option>
                             <option value="Transitions" ${s.strategy === 'Transitions' ? 'selected' : ''}>Transitions</option>
+                            <option value="Vocab" ${s.strategy === 'Vocab' ? 'selected' : ''}>Varied Vocab</option>
+                            <option value="Appositive" ${s.strategy === 'Appositive' ? 'selected' : ''}>Appositives</option>
                             <option value="SPO" ${s.strategy === 'SPO' ? 'selected' : ''}>SPO Outline</option>
                         </select>
                     </td>
-                    <td class="p-5"><input type="text" value="${s.notes || ''}" class="p-2 border border-slate-200 rounded-lg w-full focus:ring-2 focus:ring-blue-900 outline-none text-xs" onchange="window.updateVal(${currentGrade}, '${name}', 'notes', this.value)"></td>
+                    <td class="p-4 text-center">
+                        <input type="checkbox" ${s.feedback ? 'checked' : ''} class="w-4 h-4 rounded text-blue-900 focus:ring-blue-900" onchange="window.updateVal(${currentGrade}, '${name}', 'feedback', this.checked ? 'true' : 'false')">
+                    </td>
+                    <td class="p-4"><input type="text" value="${s.notes || ''}" class="p-2 border border-slate-200 rounded w-full focus:ring-2 focus:ring-blue-900 outline-none text-[10px]" onchange="window.updateVal(${currentGrade}, '${name}', 'notes', this.value)"></td>
                 `;
                 body.appendChild(row);
             });
         }
 
         function updateSyncStatus(s) {
-            const el = document.getElementById('sync-status');
             const txt = document.getElementById('sync-text');
-            if (s === 'connected') { txt.innerText = `Grade ${currentGrade} Live Sync`; el.className = 'sync-indicator text-emerald-600 font-bold'; document.getElementById('config-alert').classList.add('hidden'); document.getElementById('connection-error-alert').classList.add('hidden'); }
-            else if (s === 'local') { txt.innerText = `Grade ${currentGrade} Offline`; el.className = 'sync-indicator text-amber-600 font-bold'; }
-            else { txt.innerText = `Connecting...`; el.className = 'sync-indicator text-slate-400'; }
+            if (s === 'connected') { txt.innerText = `G${currentGrade} Live Sync Active`; document.getElementById('config-alert').classList.add('hidden'); }
+            else if (s === 'local') txt.innerText = `G${currentGrade} Offline Mode`;
+            else txt.innerText = `Syncing...`;
         }
 
-        function showSystemError(msg) {
-            const el = document.getElementById('connection-error-alert');
-            document.getElementById('error-description').innerText = msg;
-            el.classList.remove('hidden');
-        }
-
-        function updateStats() {
-            let g = 0, c = 0, r = 0;
-            const data = activeScores[currentGrade] || {};
-            Object.values(data).forEach(s => {
-                if (s.baseline !== '' && s.revision !== '' && s.baseline !== null) {
-                    g += (parseFloat(s.revision) - parseFloat(s.baseline));
-                    c++; r++;
-                }
-            });
-            document.getElementById('total-students').innerText = rosters[currentGrade].length;
-            document.getElementById('avg-growth').innerText = c > 0 ? `+ ${(g/c).toFixed(2)}` : '0.00';
-            document.getElementById('revision-rate').innerText = rosters[currentGrade].length > 0 ? Math.round((r/rosters[currentGrade].length)*100) : '0';
-        }
-
-        function updateAssignmentUI() {
-            const sel = document.getElementById('assignment-selector');
-            sel.innerHTML = '';
-            assignments.forEach(a => {
-                const o = document.createElement('option');
-                o.value = a.id; o.text = a.name; o.selected = a.id === currentAssignmentId;
-                sel.add(o);
-            });
-            document.getElementById('delete-btn').style.opacity = assignments.length > 0 ? '1' : '0.3';
-        }
-
-        function showMessage(t,y){ const c = document.getElementById('message-container'); const m = document.createElement('div'); m.className = `px-6 py-4 rounded-xl text-white font-bold shadow-lg transform transition-all animate-bounce ${y==='error'?'bg-red-600':'bg-blue-900'}`; m.innerText = t; c.appendChild(m); setTimeout(()=>m.remove(),3000); }
+        function showSystemError(msg) { const el = document.getElementById('connection-error-alert'); document.getElementById('error-description').innerText = msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 5000); }
+        function updateAssignmentUI() { const sel = document.getElementById('assignment-selector'); sel.innerHTML = ''; assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = `[${a.mode === 'Unelaborated' ? 'PRAC' : 'LIVE'}] ${a.name}`; o.selected = a.id === currentAssignmentId; sel.add(o); }); }
         
         startApp();
     </script>
