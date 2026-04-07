@@ -18,7 +18,7 @@
             70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
         }
-        #modal-overlay, #setup-overlay, #delete-modal-overlay {
+        #modal-overlay, #setup-overlay, #delete-modal-overlay, #roster-overlay {
             display: none;
             position: fixed;
             inset: 0;
@@ -33,6 +33,7 @@
 <body class="p-4 md:p-8 pb-16">
 
     <div class="max-w-7xl mx-auto">
+        <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-800">Q4 Math Writing Tracker</h1>
@@ -65,10 +66,16 @@
             </div>
         </div>
 
-        <div class="flex border-b border-slate-200 mb-6 bg-white rounded-t-2xl overflow-hidden px-4">
-            <button onclick="window.showGrade(6)" id="tab-6" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition tab-active">Grade 6</button>
-            <button onclick="window.showGrade(7)" id="tab-7" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 7</button>
-            <button onclick="window.showGrade(8)" id="tab-8" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 8</button>
+        <!-- Grade Tabs & Roster Management -->
+        <div class="flex items-center justify-between border-b border-slate-200 mb-6 bg-white rounded-t-2xl overflow-hidden px-4">
+            <div class="flex">
+                <button onclick="window.showGrade(6)" id="tab-6" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition tab-active">Grade 6</button>
+                <button onclick="window.showGrade(7)" id="tab-7" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 7</button>
+                <button onclick="window.showGrade(8)" id="tab-8" class="px-8 py-5 text-sm font-semibold text-slate-500 hover:text-blue-900 transition">Grade 8</button>
+            </div>
+            <button onclick="window.openRosterModal()" class="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-lg transition mr-2">
+                <i class="fa-solid fa-user-plus"></i> Manage Students
+            </button>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -92,13 +99,33 @@
 
         <div class="mt-12 text-center">
             <div class="text-[10px] text-slate-400 font-mono tracking-widest uppercase mb-2">
-                Tracker Version: 2.9 (Cycle 4 Pedagogical Alignment)
+                Tracker Version: 3.0 (Dynamic Class Lists)
             </div>
             <button onclick="window.resetCloudConfig(true)" class="text-[9px] text-slate-300 hover:text-red-400 font-bold uppercase underline">
                 Reset Connection
             </button>
         </div>
 
+        <!-- Roster Management Modal -->
+        <div id="roster-overlay">
+            <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl mx-4 flex flex-col max-h-[80vh]">
+                <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Manage Grade <span id="roster-grade-title"></span> List</h3>
+                <p class="text-sm text-slate-500 mb-6 text-center">Add or remove students for this grade level.</p>
+                
+                <div class="flex gap-2 mb-6">
+                    <input type="text" id="new-student-name" placeholder="Enter student name..." class="flex-grow p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50">
+                    <button onclick="window.addStudent()" class="bg-blue-900 text-white px-6 rounded-xl font-bold hover:bg-blue-800 transition">Add</button>
+                </div>
+
+                <div id="roster-list-container" class="overflow-y-auto flex-grow divide-y divide-slate-100 border rounded-xl bg-slate-50 px-4">
+                    <!-- Names populated here -->
+                </div>
+
+                <button onclick="window.closeRosterModal()" class="mt-6 w-full py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition">Finished</button>
+            </div>
+        </div>
+
+        <!-- Task Modal -->
         <div id="modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">New Grade <span id="add-modal-grade"></span> Task</h3>
@@ -114,6 +141,7 @@
             </div>
         </div>
 
+        <!-- Cloud Setup Modal -->
         <div id="setup-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Cloud Settings</h3>
@@ -153,7 +181,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- GLOBAL EXPORTS ---
@@ -168,8 +196,15 @@
             document.getElementById('delete-modal-overlay').style.display = 'flex'; 
         };
         window.closeDeleteModal = () => { document.getElementById('delete-modal-overlay').style.display = 'none'; };
+        
+        window.openRosterModal = () => {
+            document.getElementById('roster-grade-title').innerText = currentGrade;
+            renderRosterList();
+            document.getElementById('roster-overlay').style.display = 'flex';
+        };
+        window.closeRosterModal = () => { document.getElementById('roster-overlay').style.display = 'none'; };
 
-        const rosters = {
+        const defaultRosters = {
             6: ["Alonzo Floyd", "Kareem Plummer", "Davon Zeigler", "Sijae Bailey", "Erica Davis", "Mordecai Dennison", "Vy'Elle Parker", "Ivory Murray", "Aniyah Wilder", "Elizabeth Moss", "Phoenix Newton", "Jaleel Owens", "Elijah Powell", "Brooklyn Rhodes", "Chance Robinson", "Kennedy Ross", "Brooke Tabb", "London Washington", "Illian Williams"],
             7: ["Kyle Abel", "Anthony Banks", "Dhaelyn Brown", "Jaiden Bryant", "Kyree Byrd", "Jermaine Copeland", "Harmony Reese", "Zechariah Rouse", "Tyshawn Silas", "Kourtney Pittman"],
             8: ["Ayela Hubbard", "Tyoun Handy", "Diana Kreiner", "Kayleb Cottingham", "Noah Wallace", "Ka'Marley Smith", "Tatyana Smith", "Zion Smith"]
@@ -179,6 +214,7 @@
         let currentGrade = 6;
         let currentAssignmentId = '';
         let assignments = [];
+        let activeRoster = [];
         let activeScores = { 6: {}, 7: {}, 8: {} };
 
         const startApp = async () => {
@@ -193,7 +229,7 @@
                     auth = getAuth(app);
                     appId = config.projectId || 'math-tracker-v2';
                     onAuthStateChanged(auth, (user) => { if (user) { isCloud = true; setupSync(); } });
-                    signInAnonymously(auth).catch(() => showSystemError("Auth Failed: Check Anonymous Login."));
+                    signInAnonymously(auth).catch(() => showSystemError("Auth Failed."));
                 } catch (e) { enableLocalFallback(); }
             } else { enableLocalFallback(); }
         };
@@ -206,8 +242,13 @@
         }
 
         let unsubMeta = null;
+        let unsubRoster = null;
+
         function setupSync() {
             if (unsubMeta) unsubMeta();
+            if (unsubRoster) unsubRoster();
+
+            // 1. Sync Assignment Metadata
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`);
             unsubMeta = onSnapshot(metaRef, (docSnap) => {
                 assignments = docSnap.exists() ? docSnap.data().items || [] : [];
@@ -220,7 +261,20 @@
                 }
                 updateAssignmentUI();
                 loadAssignmentScores();
-            }, () => showSystemError("Permission Denied: Check Firestore Rules."));
+            });
+
+            // 2. Sync Roster
+            const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`);
+            unsubRoster = onSnapshot(rosterRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    activeRoster = docSnap.data().students || [];
+                } else {
+                    activeRoster = defaultRosters[currentGrade];
+                    setDoc(rosterRef, { students: activeRoster });
+                }
+                renderTable();
+                if (document.getElementById('roster-overlay').style.display === 'flex') renderRosterList();
+            });
         }
 
         let unsubScores = null;
@@ -230,18 +284,26 @@
             updateSyncStatus('connecting');
             const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
             unsubScores = onSnapshot(scoreRef, (docSnap) => {
-                activeScores = docSnap.exists() ? docSnap.data().grades : { 6: {}, 7: {}, 8: {} };
+                activeScores = docSnap.exists() ? docSnap.data().grades : {};
                 updateSyncStatus('connected');
                 renderTable();
             }, () => updateSyncStatus('error'));
         }
 
         function loadLocalData() {
+            // Load Metadata
             const m = localStorage.getItem(`math_meta_g${currentGrade}`);
             assignments = m ? JSON.parse(m) : [{ id: `local_g${currentGrade}`, name: `Grade ${currentGrade} Initial`, mode: 'Transfer' }];
             if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) currentAssignmentId = assignments[0].id;
+
+            // Load Roster
+            const r = localStorage.getItem(`math_roster_g${currentGrade}`);
+            activeRoster = r ? JSON.parse(r) : defaultRosters[currentGrade];
+
+            // Load Scores
             const s = localStorage.getItem(`math_scores_${currentAssignmentId}`);
-            activeScores = s ? JSON.parse(s) : { 6: {}, 7: {}, 8: {} };
+            activeScores = s ? JSON.parse(s) : {};
+            
             updateAssignmentUI();
             renderTable();
         }
@@ -262,6 +324,58 @@
             }
         };
 
+        window.addStudent = async () => {
+            const input = document.getElementById('new-student-name');
+            const name = input.value.trim();
+            if (!name) return;
+            if (activeRoster.includes(name)) { showMessage("Student already exists", "error"); return; }
+            
+            activeRoster.push(name);
+            activeRoster.sort();
+            input.value = '';
+
+            if (isCloud) {
+                const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`);
+                await setDoc(rosterRef, { students: activeRoster });
+            } else {
+                localStorage.setItem(`math_roster_g${currentGrade}`, JSON.stringify(activeRoster));
+                renderTable();
+                renderRosterList();
+            }
+            showMessage("Student Added", "success");
+        };
+
+        window.removeStudent = async (name) => {
+            if (!confirm(`Remove ${name} from Grade ${currentGrade} roster? Scores for this name will be hidden but not deleted.`)) return;
+            activeRoster = activeRoster.filter(s => s !== name);
+            
+            if (isCloud) {
+                const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`);
+                await setDoc(rosterRef, { students: activeRoster });
+            } else {
+                localStorage.setItem(`math_roster_g${currentGrade}`, JSON.stringify(activeRoster));
+                renderTable();
+                renderRosterList();
+            }
+            showMessage("Student Removed", "error");
+        };
+
+        function renderRosterList() {
+            const container = document.getElementById('roster-list-container');
+            container.innerHTML = '';
+            activeRoster.forEach(name => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between py-3";
+                div.innerHTML = `
+                    <span class="text-sm font-medium text-slate-700">${name}</span>
+                    <button onclick="window.removeStudent('${name}')" class="text-red-400 hover:text-red-600 p-2">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
         window.showGrade = (g) => {
             currentGrade = g;
             document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active'));
@@ -279,10 +393,10 @@
                 const configObj = JSON.parse(cleaned);
                 localStorage.setItem('math_cloud_config', JSON.stringify(configObj));
                 location.reload();
-            } catch (e) { alert("Invalid format. Copy the entire { } block."); }
+            } catch (e) { alert("Invalid format."); }
         };
 
-        window.resetCloudConfig = (confirmReset) => { if(!confirmReset || confirm("Restart and clear keys?")) { localStorage.removeItem('math_cloud_config'); location.reload(); } };
+        window.resetCloudConfig = (confirmReset) => { if(!confirmReset || confirm("Reset connection?")) { localStorage.removeItem('math_cloud_config'); location.reload(); } };
 
         window.handleModalSubmit = async () => {
             const n = document.getElementById('new-assignment-name').value;
@@ -314,9 +428,9 @@
         function renderTable() {
             const body = document.getElementById('student-table-body');
             body.innerHTML = '';
-            if (!currentAssignmentId) { body.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400">Add an assignment to begin Cycle 4 monitoring.</td></tr>'; return; }
+            if (!currentAssignmentId) { body.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400">Add an assignment to begin.</td></tr>'; return; }
             
-            rosters[currentGrade].forEach(name => {
+            activeRoster.forEach(name => {
                 const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || {};
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-slate-50 transition';
@@ -355,7 +469,8 @@
 
         function showSystemError(msg) { const el = document.getElementById('connection-error-alert'); document.getElementById('error-description').innerText = msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 5000); }
         function updateAssignmentUI() { const sel = document.getElementById('assignment-selector'); sel.innerHTML = ''; assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = `[${a.mode === 'Unelaborated' ? 'PRAC' : 'LIVE'}] ${a.name}`; o.selected = a.id === currentAssignmentId; sel.add(o); }); }
-        
+        function showMessage(t,y){ const c = document.getElementById('message-container'); const m = document.createElement('div'); m.className = `px-6 py-4 rounded-xl text-white font-bold shadow-lg transform transition-all animate-bounce ${y==='error'?'bg-red-600':'bg-blue-900'}`; m.innerText = t; c.appendChild(m); setTimeout(()=>m.remove(),3000); }
+
         startApp();
     </script>
 </body>
