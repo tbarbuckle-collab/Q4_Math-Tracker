@@ -66,6 +66,22 @@
             </div>
         </div>
 
+        <!-- Dashboard Stats -->
+        <div id="stats-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="text-slate-400 text-xs font-bold uppercase mb-2">Grade <span id="stats-grade">6</span> Students</div>
+                <div id="total-students" class="text-4xl font-bold text-slate-800">--</div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="text-slate-400 text-xs font-bold uppercase mb-2">Avg Growth (Substance)</div>
+                <div id="avg-growth" class="text-4xl font-bold text-emerald-600">+ --</div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="text-slate-400 text-xs font-bold uppercase mb-2">Revision Rate</div>
+                <div id="revision-rate" class="text-4xl font-bold text-blue-900">--%</div>
+            </div>
+        </div>
+
         <!-- Grade Tabs & Roster Management -->
         <div class="flex items-center justify-between border-b border-slate-200 mb-6 bg-white rounded-t-2xl overflow-hidden px-4">
             <div class="flex">
@@ -75,6 +91,16 @@
             </div>
             <button onclick="window.openRosterModal()" class="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-lg transition mr-2">
                 <i class="fa-solid fa-user-plus"></i> Manage Students
+            </button>
+        </div>
+
+        <div class="mb-4 flex flex-col md:flex-row gap-4">
+            <div class="relative flex-grow">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="search" placeholder="Search student name..." class="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 outline-none shadow-sm bg-white" onkeyup="window.filterStudents()">
+            </div>
+            <button onclick="window.exportData()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2 font-bold shadow-sm">
+                <i class="fa-solid fa-file-csv"></i> Export for Google Sheets
             </button>
         </div>
 
@@ -99,33 +125,26 @@
 
         <div class="mt-12 text-center">
             <div class="text-[10px] text-slate-400 font-mono tracking-widest uppercase mb-2">
-                Tracker Version: 3.0 (Dynamic Class Lists)
+                Tracker Version: 3.3 (Google Sheets Friendly)
             </div>
             <button onclick="window.resetCloudConfig(true)" class="text-[9px] text-slate-300 hover:text-red-400 font-bold uppercase underline">
                 Reset Connection
             </button>
         </div>
 
-        <!-- Roster Management Modal -->
+        <!-- Modals -->
         <div id="roster-overlay">
             <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl mx-4 flex flex-col max-h-[80vh]">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Manage Grade <span id="roster-grade-title"></span> List</h3>
-                <p class="text-sm text-slate-500 mb-6 text-center">Add or remove students for this grade level.</p>
-                
                 <div class="flex gap-2 mb-6">
                     <input type="text" id="new-student-name" placeholder="Enter student name..." class="flex-grow p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50">
                     <button onclick="window.addStudent()" class="bg-blue-900 text-white px-6 rounded-xl font-bold hover:bg-blue-800 transition">Add</button>
                 </div>
-
-                <div id="roster-list-container" class="overflow-y-auto flex-grow divide-y divide-slate-100 border rounded-xl bg-slate-50 px-4">
-                    <!-- Names populated here -->
-                </div>
-
+                <div id="roster-list-container" class="overflow-y-auto flex-grow divide-y divide-slate-100 border rounded-xl bg-slate-50 px-4"></div>
                 <button onclick="window.closeRosterModal()" class="mt-6 w-full py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition">Finished</button>
             </div>
         </div>
 
-        <!-- Task Modal -->
         <div id="modal-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl mx-4 text-center">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">New Grade <span id="add-modal-grade"></span> Task</h3>
@@ -141,11 +160,9 @@
             </div>
         </div>
 
-        <!-- Cloud Setup Modal -->
         <div id="setup-overlay">
             <div class="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl mx-4">
                 <h3 class="text-2xl font-bold text-slate-800 mb-2 text-center">Cloud Settings</h3>
-                <p class="text-sm text-slate-500 mb-6 text-center">Paste Firebase JSON to enable live department sync.</p>
                 <textarea id="config-input" placeholder='Paste code here...' class="w-full h-48 p-4 border border-slate-200 rounded-xl mb-6 outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50 font-mono text-xs"></textarea>
                 <div class="flex gap-4">
                     <button onclick="window.closeSetup()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
@@ -160,7 +177,6 @@
                     <i class="fa-solid fa-trash-can text-2xl"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-800 mb-2">Delete Assignment?</h3>
-                <p class="text-slate-500 mb-8">This will permanently remove data for <span id="delete-asgn-name" class="font-bold text-slate-800"></span>.</p>
                 <div class="flex gap-4">
                     <button onclick="window.closeDeleteModal()" class="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Cancel</button>
                     <button onclick="window.handleConfirmDelete()" class="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition">Delete</button>
@@ -170,8 +186,6 @@
 
         <div id="message-container" class="fixed bottom-6 right-6 z-[2000] flex flex-col gap-2"></div>
         <div id="config-alert" class="hidden fixed bottom-6 left-6 z-[1000] p-6 bg-blue-900 text-white rounded-2xl shadow-2xl max-w-xs">
-            <h3 class="font-bold mb-1">Cloud Sync Needed</h3>
-            <p class="text-xs text-blue-100 mb-4">Connect to the database to share data with your team.</p>
             <button onclick="window.openSetup()" class="bg-white text-blue-900 px-4 py-2 rounded-lg text-xs font-bold w-full">Connect Now</button>
         </div>
         <div id="connection-error-alert" class="hidden fixed top-6 right-6 z-[2000] p-4 bg-red-600 text-white rounded-xl shadow-lg">
@@ -196,12 +210,7 @@
             document.getElementById('delete-modal-overlay').style.display = 'flex'; 
         };
         window.closeDeleteModal = () => { document.getElementById('delete-modal-overlay').style.display = 'none'; };
-        
-        window.openRosterModal = () => {
-            document.getElementById('roster-grade-title').innerText = currentGrade;
-            renderRosterList();
-            document.getElementById('roster-overlay').style.display = 'flex';
-        };
+        window.openRosterModal = () => { document.getElementById('roster-grade-title').innerText = currentGrade; renderRosterList(); document.getElementById('roster-overlay').style.display = 'flex'; };
         window.closeRosterModal = () => { document.getElementById('roster-overlay').style.display = 'none'; };
 
         const defaultRosters = {
@@ -215,21 +224,19 @@
         let currentAssignmentId = '';
         let assignments = [];
         let activeRoster = [];
-        let activeScores = { 6: {}, 7: {}, 8: {} };
+        let activeScores = {};
 
         const startApp = async () => {
-            let config = null;
             const stored = localStorage.getItem('math_cloud_config');
-            if (stored) { try { config = JSON.parse(stored); } catch(e) {} }
-
-            if (config && config.apiKey) {
+            if (stored) {
                 try {
+                    const config = JSON.parse(stored);
                     const app = initializeApp(config);
                     db = getFirestore(app);
                     auth = getAuth(app);
-                    appId = config.projectId || 'math-tracker-v2';
+                    appId = config.projectId;
                     onAuthStateChanged(auth, (user) => { if (user) { isCloud = true; setupSync(); } });
-                    signInAnonymously(auth).catch(() => showSystemError("Auth Failed."));
+                    signInAnonymously(auth);
                 } catch (e) { enableLocalFallback(); }
             } else { enableLocalFallback(); }
         };
@@ -241,14 +248,10 @@
             loadLocalData();
         }
 
-        let unsubMeta = null;
-        let unsubRoster = null;
+        let unsubMeta = null, unsubRoster = null, unsubScores = null;
 
         function setupSync() {
             if (unsubMeta) unsubMeta();
-            if (unsubRoster) unsubRoster();
-
-            // 1. Sync Assignment Metadata
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_meta', `grade_${currentGrade}`);
             unsubMeta = onSnapshot(metaRef, (docSnap) => {
                 assignments = docSnap.exists() ? docSnap.data().items || [] : [];
@@ -256,133 +259,109 @@
                     assignments = [{ id: `default_g${currentGrade}`, name: `Grade ${currentGrade} Baseline`, mode: 'Transfer' }];
                     setDoc(metaRef, { items: assignments });
                 }
-                if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) {
-                    currentAssignmentId = assignments[0].id;
-                }
+                if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) currentAssignmentId = assignments[0].id;
                 updateAssignmentUI();
                 loadAssignmentScores();
             });
 
-            // 2. Sync Roster
+            if (unsubRoster) unsubRoster();
             const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`);
             unsubRoster = onSnapshot(rosterRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    activeRoster = docSnap.data().students || [];
-                } else {
-                    activeRoster = defaultRosters[currentGrade];
-                    setDoc(rosterRef, { students: activeRoster });
-                }
+                activeRoster = docSnap.exists() ? docSnap.data().students || [] : defaultRosters[currentGrade];
                 renderTable();
-                if (document.getElementById('roster-overlay').style.display === 'flex') renderRosterList();
+                updateStats();
             });
         }
 
-        let unsubScores = null;
         function loadAssignmentScores() {
-            if (!currentAssignmentId) return;
             if (unsubScores) unsubScores();
-            updateSyncStatus('connecting');
             const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
             unsubScores = onSnapshot(scoreRef, (docSnap) => {
-                activeScores = docSnap.exists() ? docSnap.data().grades : {};
+                activeScores = docSnap.exists() ? docSnap.data().grades || {} : {};
                 updateSyncStatus('connected');
                 renderTable();
-            }, () => updateSyncStatus('error'));
+                updateStats();
+            });
         }
 
         function loadLocalData() {
-            // Load Metadata
             const m = localStorage.getItem(`math_meta_g${currentGrade}`);
             assignments = m ? JSON.parse(m) : [{ id: `local_g${currentGrade}`, name: `Grade ${currentGrade} Initial`, mode: 'Transfer' }];
             if (!currentAssignmentId || !assignments.find(a => a.id === currentAssignmentId)) currentAssignmentId = assignments[0].id;
-
-            // Load Roster
             const r = localStorage.getItem(`math_roster_g${currentGrade}`);
             activeRoster = r ? JSON.parse(r) : defaultRosters[currentGrade];
-
-            // Load Scores
             const s = localStorage.getItem(`math_scores_${currentAssignmentId}`);
             activeScores = s ? JSON.parse(s) : {};
-            
             updateAssignmentUI();
             renderTable();
+            updateStats();
+        }
+
+        function updateAssignmentUI() {
+            const sel = document.getElementById('assignment-selector');
+            sel.innerHTML = '';
+            assignments.forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.id;
+                o.text = `[${a.mode === 'Unelaborated' ? 'PRAC' : 'LIVE'}] ${a.name}`;
+                o.selected = a.id === currentAssignmentId;
+                sel.add(o);
+            });
         }
 
         window.updateVal = async (grade, name, field, val) => {
             if (!activeScores[grade]) activeScores[grade] = {};
             if (!activeScores[grade][name]) activeScores[grade][name] = { baseline: '', revision: '', editing: '', strategy: '', feedback: false, notes: '' };
-            
-            if (field === 'feedback') activeScores[grade][name][field] = val === 'true';
-            else activeScores[grade][name][field] = val;
-            
-            if (isCloud && auth && auth.currentUser) {
-                const scoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId);
-                await setDoc(scoreRef, { grades: activeScores }, { merge: true });
-            } else {
-                localStorage.setItem(`math_scores_${currentAssignmentId}`, JSON.stringify(activeScores));
-                localStorage.setItem(`math_meta_g${currentGrade}`, JSON.stringify(assignments));
-            }
+            activeScores[grade][name][field] = field === 'feedback' ? (val === 'true') : val;
+            if (isCloud) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'assignment_scores', currentAssignmentId), { grades: activeScores }, { merge: true });
+            else localStorage.setItem(`math_scores_${currentAssignmentId}`, JSON.stringify(activeScores));
+            updateStats();
         };
 
         window.addStudent = async () => {
             const input = document.getElementById('new-student-name');
             const name = input.value.trim();
-            if (!name) return;
-            if (activeRoster.includes(name)) { showMessage("Student already exists", "error"); return; }
-            
+            if (!name || activeRoster.includes(name)) return;
             activeRoster.push(name);
             activeRoster.sort();
             input.value = '';
-
-            if (isCloud) {
-                const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`);
-                await setDoc(rosterRef, { students: activeRoster });
-            } else {
-                localStorage.setItem(`math_roster_g${currentGrade}`, JSON.stringify(activeRoster));
-                renderTable();
-                renderRosterList();
-            }
-            showMessage("Student Added", "success");
+            if (isCloud) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`), { students: activeRoster });
+            else { localStorage.setItem(`math_roster_g${currentGrade}`, JSON.stringify(activeRoster)); renderTable(); updateStats(); renderRosterList(); }
         };
 
         window.removeStudent = async (name) => {
-            if (!confirm(`Remove ${name} from Grade ${currentGrade} roster? Scores for this name will be hidden but not deleted.`)) return;
+            if (!confirm(`Remove ${name}?`)) return;
             activeRoster = activeRoster.filter(s => s !== name);
-            
-            if (isCloud) {
-                const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`);
-                await setDoc(rosterRef, { students: activeRoster });
-            } else {
-                localStorage.setItem(`math_roster_g${currentGrade}`, JSON.stringify(activeRoster));
-                renderTable();
-                renderRosterList();
-            }
-            showMessage("Student Removed", "error");
+            if (isCloud) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rosters', `grade_${currentGrade}`), { students: activeRoster });
+            else { localStorage.setItem(`math_roster_g${currentGrade}`, JSON.stringify(activeRoster)); renderTable(); updateStats(); renderRosterList(); }
         };
 
         function renderRosterList() {
-            const container = document.getElementById('roster-list-container');
-            container.innerHTML = '';
-            activeRoster.forEach(name => {
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between py-3";
-                div.innerHTML = `
-                    <span class="text-sm font-medium text-slate-700">${name}</span>
-                    <button onclick="window.removeStudent('${name}')" class="text-red-400 hover:text-red-600 p-2">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
-                    </button>
-                `;
-                container.appendChild(div);
+            const c = document.getElementById('roster-list-container'); c.innerHTML = '';
+            activeRoster.forEach(n => {
+                const d = document.createElement('div'); d.className = "flex justify-between py-3 items-center";
+                d.innerHTML = `<span class="text-sm font-medium text-slate-700">${n}</span><button onclick="window.removeStudent('${n}')" class="text-red-400"><i class="fa-solid fa-trash-can"></i></button>`;
+                c.appendChild(d);
             });
         }
 
-        window.showGrade = (g) => {
-            currentGrade = g;
-            document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById(`tab-${g}`).classList.add('tab-active');
-            isCloud ? setupSync() : loadLocalData();
-        };
+        function updateStats() {
+            let growth = 0, count = 0, revised = 0;
+            const data = activeScores[currentGrade] || {};
+            activeRoster.forEach(name => {
+                const s = data[name];
+                if (s && s.baseline !== '' && s.revision !== '' && s.baseline !== null && s.revision !== null) {
+                    growth += (parseFloat(s.revision) - parseFloat(s.baseline));
+                    count++; revised++;
+                }
+            });
+            document.getElementById('stats-grade').innerText = currentGrade;
+            document.getElementById('total-students').innerText = activeRoster.length;
+            document.getElementById('avg-growth').innerText = count > 0 ? `+ ${(growth/count).toFixed(2)}` : '0.00';
+            document.getElementById('revision-rate').innerText = activeRoster.length > 0 ? Math.round((revised/activeRoster.length)*100) : '0';
+        }
 
+        window.showGrade = (g) => { currentGrade = g; document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('tab-active')); document.getElementById(`tab-${g}`).classList.add('tab-active'); isCloud ? setupSync() : loadLocalData(); };
         window.switchAssignment = (id) => { currentAssignmentId = id; isCloud ? loadAssignmentScores() : loadLocalData(); };
 
         window.saveConfig = () => {
@@ -425,11 +404,23 @@
             closeDeleteModal();
         };
 
+        window.exportData = () => {
+            const a = assignments.find(x => x.id === currentAssignmentId);
+            if (!a) return;
+            let csv = `Grade,Assignment,Mode,Student Name,Baseline,Revision (Substance),Editing (Polishing),TWR Strategy,Feedback Applied,Observations\n`;
+            activeRoster.forEach(name => {
+                const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || {};
+                csv += `"${currentGrade}","${a.name}","${a.mode}","${name}","${s.baseline||''}","${s.revision||''}","${s.editing||''}","${s.strategy||''}","${s.feedback?'Yes':'No'}","${(s.notes||'').replace(/"/g, '""')}"\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})));
+            link.setAttribute("download", `G${currentGrade}_${a.name}_Export.csv`);
+            link.click();
+        };
+
         function renderTable() {
-            const body = document.getElementById('student-table-body');
-            body.innerHTML = '';
+            const body = document.getElementById('student-table-body'); body.innerHTML = '';
             if (!currentAssignmentId) { body.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400">Add an assignment to begin.</td></tr>'; return; }
-            
             activeRoster.forEach(name => {
                 const s = (activeScores[currentGrade] && activeScores[currentGrade][name]) || {};
                 const row = document.createElement('tr');
@@ -440,7 +431,7 @@
                     <td class="p-4 text-center"><input type="number" min="0" max="4" value="${s.revision || ''}" class="p-2 border border-blue-200 rounded score-input focus:ring-2 focus:ring-blue-900 outline-none text-xs bg-blue-50/30" onchange="window.updateVal(${currentGrade}, '${name}', 'revision', this.value)"></td>
                     <td class="p-4 text-center"><input type="number" min="0" max="4" value="${s.editing || ''}" class="p-2 border border-slate-200 rounded score-input focus:ring-2 focus:ring-blue-900 outline-none text-xs" onchange="window.updateVal(${currentGrade}, '${name}', 'editing', this.value)"></td>
                     <td class="p-4">
-                        <select class="p-2 border border-slate-200 rounded focus:ring-2 focus:ring-blue-900 outline-none text-[10px] w-full" onchange="window.updateVal(${currentGrade}, '${name}', 'strategy', this.value)">
+                        <select class="p-2 border border-slate-200 rounded text-[10px] w-full focus:ring-2 focus:ring-blue-900 outline-none" onchange="window.updateVal(${currentGrade}, '${name}', 'strategy', this.value)">
                             <option value="">Select...</option>
                             <option value="Expansion" ${s.strategy === 'Expansion' ? 'selected' : ''}>Expansion</option>
                             <option value="Summary" ${s.strategy === 'Summary' ? 'selected' : ''}>Summary Sentences</option>
@@ -462,14 +453,9 @@
 
         function updateSyncStatus(s) {
             const txt = document.getElementById('sync-text');
-            if (s === 'connected') { txt.innerText = `G${currentGrade} Live Sync Active`; document.getElementById('config-alert').classList.add('hidden'); }
+            if (s === 'connected') txt.innerText = `G${currentGrade} Live Sync Active`;
             else if (s === 'local') txt.innerText = `G${currentGrade} Offline Mode`;
-            else txt.innerText = `Syncing...`;
         }
-
-        function showSystemError(msg) { const el = document.getElementById('connection-error-alert'); document.getElementById('error-description').innerText = msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 5000); }
-        function updateAssignmentUI() { const sel = document.getElementById('assignment-selector'); sel.innerHTML = ''; assignments.forEach(a => { const o = document.createElement('option'); o.value = a.id; o.text = `[${a.mode === 'Unelaborated' ? 'PRAC' : 'LIVE'}] ${a.name}`; o.selected = a.id === currentAssignmentId; sel.add(o); }); }
-        function showMessage(t,y){ const c = document.getElementById('message-container'); const m = document.createElement('div'); m.className = `px-6 py-4 rounded-xl text-white font-bold shadow-lg transform transition-all animate-bounce ${y==='error'?'bg-red-600':'bg-blue-900'}`; m.innerText = t; c.appendChild(m); setTimeout(()=>m.remove(),3000); }
 
         startApp();
     </script>
